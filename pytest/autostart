@@ -1,0 +1,4 @@
+@lxpanel --profile LXDE-pi
+@pcmanfm --desktop --profile LXDE-pi
+@xwit -root -warp $( cat /sys/module/*fb*/parameters/fbwidth ) $( cat /sys/module/*fb*/parameters/fbheight )
+@sudo /usr/bin/python /home/pi/organ/pytest/gpiotest.py
