@@ -648,10 +648,10 @@ def entropy_toy():
 				for message in nmo_file.play():
 					if midi_write_pass_flag == 0:
 						try:
-							print "Trying to send out the midi out port"
+							print 'Attempting to play this new music object created from track {}.'.format(j)
 							out.send(message)
 						except:
-							print "I can't find a midi out port so setting a pass flag"
+							print "I can't find a midi out port so setting a pass flag."
 							midi_write_pass_flag = 1
 							print "midi_write_pass_flag is ", midi_write_pass_flag
 							pass
@@ -682,20 +682,22 @@ def entropy_toy():
 
 def composer():
 
-	print "playing a random midi file for you"
-
-	os.chdir(mypath+"/songs")
+	print "selecting a random midi file for you"
+	#os.chdir(mypath+"/songs")
 	#get current working directory for file list building
 	mypath = os.getcwd()
-	onlyfiles = [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
+	print "Home directory for all this work is ", mypath
+	os.chdir(mypath+"/songs")
+	songspath = os.getcwd()
+	print "The songs directory is", songspath
+	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
 
-	#print "here's all %d files in the song directory" % len(onlyfiles)
-	#print onlyfiles
-
-
+	print "here's all %d files in the song directory" % len(onlyfiles)
+	print onlyfiles
 
 	mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
 	print "%s is a random file from the songs directory" % mysong
+
 
 	#create a midi object from the midi file
 	mid = MidiFile(mysong)
@@ -1149,10 +1151,12 @@ def jukebox(n):
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 	print "picking %d random files for you." % (n - 1)
-	os.chdir(mypath+"/songs")
-	#get current working directory for file list building
 	mypath = os.getcwd()
-	onlyfiles = [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
+	print "Home directory for all this work is ", mypath
+	os.chdir(mypath+"/songs")
+	songspath = os.getcwd()
+	print "The songs directory is", songspath
+	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
 	#print "here's all %d files in the song directory" % len(onlyfiles)
 	#print onlyfiles
 	for x in xrange(1, n):
@@ -1169,7 +1173,7 @@ def jukebox(n):
 		for message in mid.play():
 			if midi_write_pass_flag == 0:
 				try:
-					print "Trying to send out the midi out port"
+					print "Trying to send out the midi out port in the jukebox function"
 					out.send(message)
 				except:
 					print "I can't find a midi out port so setting a pass flag"
@@ -1196,7 +1200,7 @@ while ans:
 	print("""
 	1.Play a random song
 	2.Play lots of random songs!
-	3.Generate new song from random MIDI file
+	3.Generate new tracks from random MIDI file
 	4.Just play keyboard
 	5.Exit/Quit
 	6.Entropy Toy
@@ -1215,8 +1219,12 @@ while ans:
 	elif ans=="3":
 		composer()
 	elif ans=="4":
-		print("\n You have the conn")
-		#out.reset()
+		try:
+			out.reset()
+			print "You have the conn."
+		except:
+			print "No output port found."
+		
 	elif ans=="5":
 		print("\n Goodbye")
 		ans = None
