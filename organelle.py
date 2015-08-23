@@ -64,6 +64,12 @@ from collections import deque
 mido.set_backend('mido.backends.rtmidi')
 print "Backend selected is %s " % mido.backend
 
+#find out available APIs
+print "Available APIs are:", mido.backend.module.get_api_names()
+
+#find what the ports are called
+print "Output port names are:", mido.get_output_names()
+
 #open up a rtmidi output port for playing midi files
 
 try:
@@ -169,13 +175,17 @@ def is_non_zero_file(fpath):
 
 def entropy_toy():
 	print "selecting a random midi file for you"
-	os.chdir("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/songs")
+	#os.chdir(mypath+"/songs")
 	#get current working directory for file list building
 	mypath = os.getcwd()
-	onlyfiles = [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
+	print "Home directory for all this work is ", mypath
+	os.chdir(mypath+"/songs")
+	songspath = os.getcwd()
+	print "The songs directory is", songspath
+	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
 
-	#print "here's all %d files in the song directory" % len(onlyfiles)
-	#print onlyfiles
+	print "here's all %d files in the song directory" % len(onlyfiles)
+	print onlyfiles
 
 	mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
 	print "%s is a random file from the songs directory" % mysong
@@ -188,32 +198,32 @@ def entropy_toy():
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 			
 	for i in range(0, 17):
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_contents.txt".format(i)):
+			os.remove(mypath+"/{}_track_contents.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_durations.txt".format(i)):
+			os.remove(mypath+"/{}_track_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_track_transition_table.txt".format(i))
 			
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_notes.txt".format(i)):
+			os.remove(mypath+"/{}_track_notes.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_notes_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_track_notes_transition_table.txt".format(i))
 			
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(i))
+		if os.path.isfile(mypath+"/{}_rest_durations.txt".format(i)):
+			os.remove(mypath+"/{}_rest_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_rest_durations_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_rest_durations_transition_table.txt".format(i))
 
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(i))
+		if os.path.isfile(mypath+"/{}_note_durations.txt".format(i)):
+			os.remove(mypath+"/{}_note_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_note_durations_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_note_durations_transition_table.txt".format(i))
 
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.mid".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.mid".format(i))
+		if os.path.isfile(mypath+"/nmo_track_{}.txt".format(i)):
+			os.remove(mypath+"/nmo_track_{}.txt".format(i))
+		if os.path.isfile(mypath+"/nmo_track_{}.mid".format(i)):
+			os.remove(mypath+"/nmo_track_{}.mid".format(i))
 			
 			
 			
@@ -249,11 +259,11 @@ def entropy_toy():
 	#name the text file with the track number
 	for i, track in enumerate(mid.tracks):
 		print('(notes and durations) Examining Track {}: {}'.format(i, track.name))
-		notes_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i)
-		contents_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i)
-		durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i)
-		rest_durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i)
-		note_durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i)
+		notes_file_name = mypath+"/{}_track_notes.txt".format(i)
+		contents_file_name = mypath+"/{}_track_contents.txt".format(i)
+		durations_file_name = mypath+"/{}_track_durations.txt".format(i)
+		rest_durations_file_name = mypath+"/{}_rest_durations.txt".format(i)
+		note_durations_file_name = mypath+"/{}_note_durations.txt".format(i)
 		
 		n = open(notes_file_name, 'w+')
 		h = open(contents_file_name, 'w+')
@@ -380,7 +390,7 @@ def entropy_toy():
 	for j in range(0, i+1):
 
 			
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j)
+		file_name = mypath+"/{}_track_contents.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_track_contents.txt is empty".format(j)
 			#skip_empty_track is set whenever we have an empty track
@@ -388,9 +398,9 @@ def entropy_toy():
 			skip_empty_track = 1
 		else:
 			print "{}_track_contents.txt will be examined for entropy changes".format(j)
-			t = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j))
+			t = pykov.readtrj(mypath+"/{}_track_contents.txt".format(j))
 			p, P = pykov.maximum_likelihood_probabilities(t,lag_time=1)
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_track_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -404,7 +414,7 @@ def entropy_toy():
 			phrase_lengths.append(P.kemeny_constant())
 			#Generate a phrase of length equal to the Kemeny constant of the track
 			print "A phrase of kemeny length from this transition table is:", P.walk(int(P.kemeny_constant()))
-			entropy_file_length = num_lines = sum(1 for line in open("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j)))
+			entropy_file_length = num_lines = sum(1 for line in open(mypath+"/{}_track_contents.txt".format(j)))
 			print "{}_track_contents.txt is ".format(j), entropy_file_length, "lines long"
 			print "Now we're going to use the Kemeny Constant length as a sliding window for entropy."
 			
@@ -462,7 +472,7 @@ def entropy_toy():
 
 
 #			#this doesn't read in overlapping blocks, but might be useful for something
-#			with open("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j)) as entropy_file:
+#			with open(mypath+"/{}_track_contents.txt".format(j)) as entropy_file:
 #				while True:
 #					kemeny_chunk = list(islice(entropy_file, P.kemeny_constant()))
 #					print "kemeny chunk is", kemeny_chunk
@@ -476,15 +486,15 @@ def entropy_toy():
 			
 
 
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(j)
+		file_name = mypath+"/{}_track_notes.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_track_notes.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			print "{}_track_notes.txt will become a markov object and a new music object".format(j)
-			t = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(j))
+			t = pykov.readtrj(mypath+"/{}_track_notes.txt".format(j))
 			m, M = pykov.maximum_likelihood_probabilities(t,lag_time=1)
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_track_notes_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -500,21 +510,21 @@ def entropy_toy():
 
 		
 		
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(j)
+		file_name = mypath+"/{}_rest_durations.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_rest_durations.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			#process the track into a markov chain thing
 			print "{}_rest_durations.txt will become a markov object and a new music object".format(j)
-			u = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(j))
+			u = pykov.readtrj(mypath+"/{}_rest_durations.txt".format(j))
 			q, Q = pykov.maximum_likelihood_probabilities(u,lag_time=1)
 			print "if there aren't any rests to give a transition table, don't try to write one."
 			#print "sorted q is currently ", q.sort(reverse = True)
 			#print "Q is currently ", Q
 			if len(q) > 0:
 				rest_delta = (q.sort(reverse = True)[0])[0]
-				tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(j)
+				tt_file_name = mypath+"/{}_rest_durations_transition_table.txt".format(j)
 				k = open(tt_file_name, 'w+')
 				#p is a pykov vector. It's the probability distribution of all the notes in the track.
 				#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -525,18 +535,18 @@ def entropy_toy():
 				#print "When it does, it is", Q.kemeny_constant()
 			
 			
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(j)
+		file_name = mypath+"/{}_note_durations.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_note_durations.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			#process the track into a markov chain thing
 			print "{}_note_durations.txt will become a markov object and a new music object".format(j)
-			v = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(j))
+			v = pykov.readtrj(mypath+"/{}_note_durations.txt".format(j))
 			r, R = pykov.maximum_likelihood_probabilities(v,lag_time=1)
 			note_delta = (r.sort(reverse = True)[0])[0]
 			
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_note_durations_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -549,7 +559,7 @@ def entropy_toy():
 		#P.walk(n) gives a random walk of n notes based on the contents transition table. Returns an array.
 		#P.move(state) gives the next state based on the transition table. Returns a string here.
 		if skip_empty_track == 0:
-			nmo_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(j)
+			nmo_file_name = mypath+"/nmo_track_{}.txt".format(j)
 			l = open(nmo_file_name, 'w+')
 			print >>l, P.walk(100)
 			
@@ -674,7 +684,7 @@ def composer():
 
 	print "playing a random midi file for you"
 
-	os.chdir("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/songs")
+	os.chdir(mypath+"/songs")
 	#get current working directory for file list building
 	mypath = os.getcwd()
 	onlyfiles = [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
@@ -710,32 +720,32 @@ def composer():
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 			
 	for i in range(0, 17):
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_contents.txt".format(i)):
+			os.remove(mypath+"/{}_track_contents.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_durations.txt".format(i)):
+			os.remove(mypath+"/{}_track_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_track_transition_table.txt".format(i))
 			
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_notes.txt".format(i)):
+			os.remove(mypath+"/{}_track_notes.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_notes_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_track_notes_transition_table.txt".format(i))
 			
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(i))
+		if os.path.isfile(mypath+"/{}_rest_durations.txt".format(i)):
+			os.remove(mypath+"/{}_rest_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_rest_durations_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_rest_durations_transition_table.txt".format(i))
 
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(i))
+		if os.path.isfile(mypath+"/{}_note_durations.txt".format(i)):
+			os.remove(mypath+"/{}_note_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_note_durations_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_note_durations_transition_table.txt".format(i))
 
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.mid".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.mid".format(i))
+		if os.path.isfile(mypath+"/nmo_track_{}.txt".format(i)):
+			os.remove(mypath+"/nmo_track_{}.txt".format(i))
+		if os.path.isfile(mypath+"/nmo_track_{}.mid".format(i)):
+			os.remove(mypath+"/nmo_track_{}.mid".format(i))
 
 
 
@@ -778,11 +788,11 @@ def composer():
 	#name the text file with the track number
 	for i, track in enumerate(mid.tracks):
 		print('(notes and durations) Examining Track {}: {}'.format(i, track.name))
-		notes_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i)
-		contents_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i)
-		durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i)
-		rest_durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i)
-		note_durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i)
+		notes_file_name = mypath+"/{}_track_notes.txt".format(i)
+		contents_file_name = mypath+"/{}_track_contents.txt".format(i)
+		durations_file_name = mypath+"/{}_track_durations.txt".format(i)
+		rest_durations_file_name = mypath+"/{}_rest_durations.txt".format(i)
+		note_durations_file_name = mypath+"/{}_note_durations.txt".format(i)
 		
 		n = open(notes_file_name, 'w+')
 		h = open(contents_file_name, 'w+')
@@ -909,7 +919,7 @@ def composer():
 	for j in range(0, i+1):
 
 			
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j)
+		file_name = mypath+"/{}_track_contents.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_track_contents.txt is empty".format(j)
 			#skip_empty_track is set whenever we have an empty track
@@ -917,9 +927,9 @@ def composer():
 			skip_empty_track = 1
 		else:
 			print "{}_track_contents.txt will become a markov object and a new music object".format(j)
-			t = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j))
+			t = pykov.readtrj(mypath+"/{}_track_contents.txt".format(j))
 			p, P = pykov.maximum_likelihood_probabilities(t,lag_time=1)
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_track_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -935,15 +945,15 @@ def composer():
 			print "A phrase of kemeny length from this transition table is:", P.walk(int(P.kemeny_constant()))
 
 
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(j)
+		file_name = mypath+"/{}_track_notes.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_track_notes.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			print "{}_track_notes.txt will become a markov object and a new music object".format(j)
-			t = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(j))
+			t = pykov.readtrj(mypath+"/{}_track_notes.txt".format(j))
 			m, M = pykov.maximum_likelihood_probabilities(t,lag_time=1)
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_track_notes_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -955,21 +965,21 @@ def composer():
 
 		
 		
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(j)
+		file_name = mypath+"/{}_rest_durations.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_rest_durations.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			#process the track into a markov chain thing
 			print "{}_rest_durations.txt will become a markov object and a new music object".format(j)
-			u = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(j))
+			u = pykov.readtrj(mypath+"/{}_rest_durations.txt".format(j))
 			q, Q = pykov.maximum_likelihood_probabilities(u,lag_time=1)
 			print "if there aren't any rests to give a transition table, don't try to write one."
 			#print "sorted q is currently ", q.sort(reverse = True)
 			#print "Q is currently ", Q
 			if len(q) > 0:
 				rest_delta = (q.sort(reverse = True)[0])[0]
-				tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(j)
+				tt_file_name = mypath+"/{}_rest_durations_transition_table.txt".format(j)
 				k = open(tt_file_name, 'w+')
 				#p is a pykov vector. It's the probability distribution of all the notes in the track.
 				#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -980,18 +990,18 @@ def composer():
 				#print "When it does, it is", Q.kemeny_constant()
 			
 			
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(j)
+		file_name = mypath+"/{}_note_durations.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_note_durations.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			#process the track into a markov chain thing
 			print "{}_note_durations.txt will become a markov object and a new music object".format(j)
-			v = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(j))
+			v = pykov.readtrj(mypath+"/{}_note_durations.txt".format(j))
 			r, R = pykov.maximum_likelihood_probabilities(v,lag_time=1)
 			note_delta = (r.sort(reverse = True)[0])[0]
 			
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_note_durations_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -1004,7 +1014,7 @@ def composer():
 		#P.walk(n) gives a random walk of n notes based on the contents transition table. Returns an array.
 		#P.move(state) gives the next state based on the transition table. Returns a string here.
 		if skip_empty_track == 0:
-			nmo_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(j)
+			nmo_file_name = mypath+"/nmo_track_{}.txt".format(j)
 			l = open(nmo_file_name, 'w+')
 			print >>l, P.walk(100)
 			
@@ -1139,7 +1149,7 @@ def jukebox(n):
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 	print "picking %d random files for you." % (n - 1)
-	os.chdir("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/songs")
+	os.chdir(mypath+"/songs")
 	#get current working directory for file list building
 	mypath = os.getcwd()
 	onlyfiles = [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
