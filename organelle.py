@@ -73,7 +73,7 @@ print "Output port names are:", mido.get_output_names()
 #open up a rtmidi output port for playing midi files
 
 try:
-	out = mido.open_output()
+	out = mido.open_output('USB2.0-MIDI 20:0')
 except:
 	pass
 	print "Failed to open a MIDO output port, but going on with the rest of the show."
