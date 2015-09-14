@@ -1,9 +1,11 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#	 
+#	 Pull out delete old files to funtion OK
 #   Set up a port OK
 #   Parse a file for notes OK 
 #   Parse notes for durations OK
 #   Parse rests for durations OK
-#   Make a markov chain from the notes OK
+#   Make a markov chain from the notes OK/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_4.mid
 #   Make a markov chain from the durations OK
 #   Choose a random file OK
 #   Play that random file OK  
@@ -73,7 +75,7 @@ print "Output port names are:", mido.get_output_names()
 #open up a rtmidi output port for playing midi files
 
 try:
-	out = mido.open_output('USB2.0-MIDI 20:0')
+	out = mido.open_output()
 except:
 	pass
 	print "Failed to open a MIDO output port, but going on with the rest of the show."
@@ -164,6 +166,45 @@ def is_non_zero_file(fpath):
 
 
 
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# erase all old files
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+def erase_old_files():
+	mypath = os.getcwd()
+	for i in range(0, 17):
+		if os.path.isfile(mypath+"/{}_track_contents.txt".format(i)):
+			os.remove(mypath+"/{}_track_contents.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_durations.txt".format(i)):
+			os.remove(mypath+"/{}_track_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_track_transition_table.txt".format(i))
+			
+		if os.path.isfile(mypath+"/{}_track_notes.txt".format(i)):
+			os.remove(mypath+"/{}_track_notes.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_notes_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_track_notes_transition_table.txt".format(i))
+			
+		if os.path.isfile(mypath+"/{}_rest_durations.txt".format(i)):
+			os.remove(mypath+"/{}_rest_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_rest_durations_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_rest_durations_transition_table.txt".format(i))
+
+		if os.path.isfile(mypath+"/{}_note_durations.txt".format(i)):
+			os.remove(mypath+"/{}_note_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_note_durations_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_note_durations_transition_table.txt".format(i))
+
+		if os.path.isfile(mypath+"/nmo_track_{}.txt".format(i)):
+			os.remove(mypath+"/nmo_track_{}.txt".format(i))
+		if os.path.isfile(mypath+"/nmo_track_{}.mid".format(i)):
+			os.remove(mypath+"/nmo_track_{}.mid".format(i))
+		print "\nErased the old files listed for track {}.".format(i)
+
+
+
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -192,40 +233,14 @@ def entropy_toy():
 
 	#create a midi object from the midi file
 	mid = MidiFile(mysong)
+	
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 	# erase all old files
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 			
-	for i in range(0, 17):
-		if os.path.isfile(mypath+"/{}_track_contents.txt".format(i)):
-			os.remove(mypath+"/{}_track_contents.txt".format(i))
-		if os.path.isfile(mypath+"/{}_track_durations.txt".format(i)):
-			os.remove(mypath+"/{}_track_durations.txt".format(i))
-		if os.path.isfile(mypath+"/{}_track_transition_table.txt".format(i)):
-			os.remove(mypath+"/{}_track_transition_table.txt".format(i))
-			
-		if os.path.isfile(mypath+"/{}_track_notes.txt".format(i)):
-			os.remove(mypath+"/{}_track_notes.txt".format(i))
-		if os.path.isfile(mypath+"/{}_track_notes_transition_table.txt".format(i)):
-			os.remove(mypath+"/{}_track_notes_transition_table.txt".format(i))
-			
-		if os.path.isfile(mypath+"/{}_rest_durations.txt".format(i)):
-			os.remove(mypath+"/{}_rest_durations.txt".format(i))
-		if os.path.isfile(mypath+"/{}_rest_durations_transition_table.txt".format(i)):
-			os.remove(mypath+"/{}_rest_durations_transition_table.txt".format(i))
+	erase_old_files()
 
-		if os.path.isfile(mypath+"/{}_note_durations.txt".format(i)):
-			os.remove(mypath+"/{}_note_durations.txt".format(i))
-		if os.path.isfile(mypath+"/{}_note_durations_transition_table.txt".format(i)):
-			os.remove(mypath+"/{}_note_durations_transition_table.txt".format(i))
-
-		if os.path.isfile(mypath+"/nmo_track_{}.txt".format(i)):
-			os.remove(mypath+"/nmo_track_{}.txt".format(i))
-		if os.path.isfile(mypath+"/nmo_track_{}.mid".format(i)):
-			os.remove(mypath+"/nmo_track_{}.mid".format(i))
-			
-			
 			
 			
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -716,46 +731,10 @@ def composer():
 	#print "mid.tempo is %s " % mid.tempo
 
 
-
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 	# erase all old files
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-			
-	for i in range(0, 17):
-		if os.path.isfile(mypath+"/{}_track_contents.txt".format(i)):
-			os.remove(mypath+"/{}_track_contents.txt".format(i))
-		if os.path.isfile(mypath+"/{}_track_durations.txt".format(i)):
-			os.remove(mypath+"/{}_track_durations.txt".format(i))
-		if os.path.isfile(mypath+"/{}_track_transition_table.txt".format(i)):
-			os.remove(mypath+"/{}_track_transition_table.txt".format(i))
-			
-		if os.path.isfile(mypath+"/{}_track_notes.txt".format(i)):
-			os.remove(mypath+"/{}_track_notes.txt".format(i))
-		if os.path.isfile(mypath+"/{}_track_notes_transition_table.txt".format(i)):
-			os.remove(mypath+"/{}_track_notes_transition_table.txt".format(i))
-			
-		if os.path.isfile(mypath+"/{}_rest_durations.txt".format(i)):
-			os.remove(mypath+"/{}_rest_durations.txt".format(i))
-		if os.path.isfile(mypath+"/{}_rest_durations_transition_table.txt".format(i)):
-			os.remove(mypath+"/{}_rest_durations_transition_table.txt".format(i))
-
-		if os.path.isfile(mypath+"/{}_note_durations.txt".format(i)):
-			os.remove(mypath+"/{}_note_durations.txt".format(i))
-		if os.path.isfile(mypath+"/{}_note_durations_transition_table.txt".format(i)):
-			os.remove(mypath+"/{}_note_durations_transition_table.txt".format(i))
-
-		if os.path.isfile(mypath+"/nmo_track_{}.txt".format(i)):
-			os.remove(mypath+"/nmo_track_{}.txt".format(i))
-		if os.path.isfile(mypath+"/nmo_track_{}.mid".format(i)):
-			os.remove(mypath+"/nmo_track_{}.mid".format(i))
-
-
-
-
-			
-
-			
-			
+	erase_old_files()
 
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -1153,12 +1132,12 @@ def jukebox(n):
 	print "picking %d random files for you." % (n - 1)
 	mypath = os.getcwd()
 	print "Home directory for all this work is ", mypath
-	os.chdir(mypath+"/songs")
-	songspath = os.getcwd()
+	songspath = (mypath+"/songs")
 	print "The songs directory is", songspath
 	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
 	#print "here's all %d files in the song directory" % len(onlyfiles)
 	#print onlyfiles
+	os.chdir(songspath)
 	for x in xrange(1, n):
 		mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
 		print "%s is the current random file from the songs directory" % mysong
@@ -1171,6 +1150,7 @@ def jukebox(n):
 		print "Song number %d is beginning." % x
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		for message in mid.play():
+			#print message
 			if midi_write_pass_flag == 0:
 				try:
 					print "Trying to send out the midi out port in the jukebox function"
@@ -1184,6 +1164,7 @@ def jukebox(n):
 		print "Song number %d has ended." % x
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		x = x - 1
+	os.chdir(mypath)
 
 
 
@@ -1204,6 +1185,8 @@ while ans:
 	4.Just play keyboard
 	5.Exit/Quit
 	6.Entropy Toy
+	7.Play Theremin
+	8.Play Memory Game
 	""")
 	ans=raw_input("What would you like to do? ")
 	if ans=="1":
@@ -1221,9 +1204,9 @@ while ans:
 	elif ans=="4":
 		try:
 			out.reset()
-			print "You have the conn."
+			print "All notes reset. You have the conn."
 		except:
-			print "No output port found."
+			print "No output port found. You have the conn."
 		
 	elif ans=="5":
 		print("\n Goodbye")
@@ -1231,5 +1214,10 @@ while ans:
 	elif ans=="6":
 		print("\nEntropy Toy Engaged")
 		entropy_toy()
+	elif ans=="7":
+		print("\nTheremin Activated!")
+		erase_old_files()
+	elif ans=="8":
+		print("\nMemory Game starting soon. Copy the pattern of notes. Hope you have perfect pitch! (Just kidding. Get close enough to the note and it will count.)")
 	else:
 		print("\n Not Valid Choice Try again")
