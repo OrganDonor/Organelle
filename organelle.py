@@ -1,6 +1,7 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #	 
 #	 Pull out delete old files to funtion OK
+#	 Pull out test_tones() to function OK
 #   Set up a port OK
 #   Parse a file for notes OK 
 #   Parse notes for durations OK
@@ -30,6 +31,7 @@ import pysparse
 #import random
 import random
 
+
 #import os
 import os
 from os import listdir
@@ -58,6 +60,7 @@ from itertools import islice
 from collections import deque
 
 
+
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # setup rtmidi as our backend
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -69,29 +72,34 @@ print "Backend selected is %s " % mido.backend
 #find out available APIs
 print "Available APIs are:", mido.backend.module.get_api_names()
 
-#find what the ports are called
+#find what the input ports are called
+print "Input port names are:", mido.get_input_names()
+
+#find what the output ports are called
 print "Output port names are:", mido.get_output_names()
 
-#open up a rtmidi output port for playing midi files
+#find out what the input-output ports are called
+print "Input-Output port names are:", mido.get_ioport_names()
+
+loaded_result = mido.backend.loaded
+print "Was backend module loaded?", loaded_result
+
+#Open up a rtmidi output port for playing midi files.
+#The name of the output port may have to be an argument: 
+#out = mido.open_output('Name Here')
 
 try:
-	out = mido.open_output()
+	out = mido.open_output('USB2.0-MIDI 20:0')
 except:
 	pass
 	print "Failed to open a MIDO output port, but going on with the rest of the show."
 
-##test port by generating some tones
-##turn this off when you don't have anything hooked up
-#print "Test tones!"
-#for i in range(36,45):
-#	my_on_message = mido.Message('note_on', note=i, velocity=100)
-#	print my_on_message
-#	out.send(my_on_message)
-#	time.sleep(0.2)
-#	my_off_message = mido.Message('note_off', note=i, velocity=100)
-#	print my_off_message
-#	out.send(my_off_message)
-#	time.sleep(0.05)
+
+try:
+	pitchport = mido.open_input()
+except:
+	pass
+	print "Failed to open a MIDO input port for the pitch game."
 
 
 
@@ -126,6 +134,32 @@ except:
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
+
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#	Test Tones
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def test_tones():	
+	print "Test tones!"
+	for i in range(36,45):
+		my_on_message = mido.Message('note_on', note=i, velocity=100)
+		print my_on_message
+		try:
+			out.send(my_on_message)
+		except:
+			pass
+			print "Failed to open a MIDO output port for note_on message number {}".format(i)
+		time.sleep(0.2)
+		my_off_message = mido.Message('note_off', note=i, velocity=100)
+		print my_off_message
+		try:
+			out.send(my_off_message)
+		except:
+			pass
+			print "Failed to open a MIDO output port for note_off message number {}".format(i)
+		time.sleep(0.05)
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -204,6 +238,90 @@ def erase_old_files():
 		print "\nErased the old files listed for track {}.".format(i)
 
 
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#	Pitch Game
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def pitch_game():
+	num_trials = 0
+	score = 0
+	#base note. 69 is middle C, but maybe it should be lower.
+	#it would be better to do a plus/minus to the base note.
+	i = 69	
+	ans2=True
+	
+	while ans2:
+		print("""
+		Pitch Game
+
+		Copy the note or notes that are played. 
+		The closer you are, the higher the score!
+		
+		Press 9 to quit.
+		Press any other key for challenge notes.
+		""")
+		ans=raw_input("What would you like to do? ")
+		if ans=="9":
+			print "\nYour final score is:", score 
+			ans2 = None
+		else:
+			# randrange gives you an integral value between the two values, inclusive
+			irand = random.randint(0, 12)
+			challenge_note = i + irand
+			
+			print "Play back this note."
+			print "The value added to middle C was ", irand, "for a played note of", challenge_note
+			
+
+
+			
+			my_on_message = mido.Message('note_on', note=challenge_note, velocity=100)
+			print my_on_message
+			try:
+				out.send(my_on_message)
+			except:
+				pass
+				print "Failed to open a MIDO output port for note_on message for note {}".format(challenge_note)
+			time.sleep(1)
+			my_off_message = mido.Message('note_off', note=challenge_note, velocity=100)
+			print my_off_message
+			try:
+				out.send(my_off_message)
+			except:
+				pass
+				print "Failed to open a MIDO output port for note_off message for note {}".format(challenge_note)
+				
+			#wait for response from manual or keyboard
+			#return the next message. This will block until a message arrives.
+			#If you pass block=False it will not block 
+			#and instead return None if there is no available message.
+
+			#response = mido.ports.BaseInput.receive(block=True)
+			#print response
+			
+			print "\nWaiting for messages from keyboard"
+			#message = mido.ports.BaseInput.receive(pitchport, block=True)
+			#set up fake input
+			message = mido.Message('note_on', note=(challenge_note - random.randint(0, 12)), velocity=100)
+			print message
+			if "note_on" in message.type:
+							if message.velocity > 0:
+								print "\nMIDI note received was ", message.note
+								if abs(challenge_note - message.note) == 0:
+									print "\nexactly right"
+									score = score + 10
+								elif abs(challenge_note - message.note) < 6:
+									print "\nclose enough"
+									score = score + 3
+								elif abs(challenge_note - message.note) >=6:
+									print "\nnot close enough"
+							num_trials = num_trials + 1
+							print "your score so far is:", score, ""
+
+
+	
+	
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -216,7 +334,6 @@ def erase_old_files():
 
 def entropy_toy():
 	print "selecting a random midi file for you"
-	#os.chdir(mypath+"/songs")
 	#get current working directory for file list building
 	mypath = os.getcwd()
 	print "Home directory for all this work is ", mypath
@@ -660,6 +777,7 @@ def entropy_toy():
 				
 				#now attempt to play the new music object
 				#if no port is set up, then skip over trying to output to the midi port
+				
 				for message in nmo_file.play():
 					if midi_write_pass_flag == 0:
 						try:
@@ -1082,6 +1200,7 @@ def composer():
 				#now attempt to play the new music object
 				#if no port is set up, then skip over trying to output to the midi port
 				for message in nmo_file.play():
+					print message
 					if midi_write_pass_flag == 0:
 						try:
 							print "Trying to send out the midi out port"
@@ -1150,7 +1269,7 @@ def jukebox(n):
 		print "Song number %d is beginning." % x
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		for message in mid.play():
-			#print message
+			print message
 			if midi_write_pass_flag == 0:
 				try:
 					print "Trying to send out the midi out port in the jukebox function"
@@ -1186,7 +1305,8 @@ while ans:
 	5.Exit/Quit
 	6.Entropy Toy
 	7.Play Theremin
-	8.Play Memory Game
+	8.Play Pitch Game
+	9:Test Tones
 	""")
 	ans=raw_input("What would you like to do? ")
 	if ans=="1":
@@ -1203,7 +1323,8 @@ while ans:
 		composer()
 	elif ans=="4":
 		try:
-			out.reset()
+			#might need the port name in the out.reset() function
+			out.reset('USB2.0-MIDI 20:0')
 			print "All notes reset. You have the conn."
 		except:
 			print "No output port found. You have the conn."
@@ -1218,6 +1339,9 @@ while ans:
 		print("\nTheremin Activated!")
 		erase_old_files()
 	elif ans=="8":
-		print("\nMemory Game starting soon. Copy the pattern of notes. Hope you have perfect pitch! (Just kidding. Get close enough to the note and it will count.)")
+		print("\nPitch Game starting soon. Hope you have perfect pitch! (Just kidding. Get close enough to the note and it will count.)")
+		pitch_game()
+	elif ans=="9":
+		test_tones()
 	else:
 		print("\n Not Valid Choice Try again")
