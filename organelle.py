@@ -1,17 +1,17 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #	 
-#	 Pull out delete old files to funtion OK
-#	 Pull out test_tones() to function OK
-#   Set up a port OK
-#   Parse a file for notes OK 
-#   Parse notes for durations OK
-#   Parse rests for durations OK
-#   Make a markov chain from the notes OK/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_4.mid
-#   Make a markov chain from the durations OK
-#   Choose a random file OK
-#   Play that random file OK  
-#   Create a file from the markov chain transition table OK
-#   Make a simple user interface OK
+#	Pull out delete old files to funtion OK
+#	Pull out test_tones() to function OK
+#	Set up a port OK
+#	Parse a file for notes OK 
+#	Parse notes for durations OK
+#	Parse rests for durations OK
+#	Make a markov chain from the notes OK/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_4.mid
+#	Make a markov chain from the durations OK
+#	Choose a random file OK
+#	Play that random file OK  
+#	Create a file from the markov chain transition table OK
+#	Make a simple user interface OK
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
@@ -96,7 +96,7 @@ except:
 
 
 try:
-	pitchport = mido.open_input()
+	pitchport = mido.open_input('MPKmini2 24:0')
 except:
 	pass
 	print "Failed to open a MIDO input port for the pitch game."
@@ -254,7 +254,6 @@ def pitch_game():
 	while ans2:
 		print("""
 		Pitch Game
-
 		Copy the note or notes that are played. 
 		The closer you are, the higher the score!
 		
@@ -291,7 +290,7 @@ def pitch_game():
 			except:
 				pass
 				print "Failed to open a MIDO output port for note_off message for note {}".format(challenge_note)
-				
+			time.sleep(1)			
 			#wait for response from manual or keyboard
 			#return the next message. This will block until a message arrives.
 			#If you pass block=False it will not block 
@@ -301,23 +300,26 @@ def pitch_game():
 			#print response
 			
 			print "\nWaiting for messages from keyboard"
+			#set up fake input for testing without a port
+			#message = mido.Message('note_on', note=(challenge_note - random.randint(0, 12)), velocity=100)
+
 			#message = mido.ports.BaseInput.receive(pitchport, block=True)
-			#set up fake input
-			message = mido.Message('note_on', note=(challenge_note - random.randint(0, 12)), velocity=100)
-			print message
-			if "note_on" in message.type:
-							if message.velocity > 0:
-								print "\nMIDI note received was ", message.note
-								if abs(challenge_note - message.note) == 0:
-									print "\nexactly right"
-									score = score + 10
-								elif abs(challenge_note - message.note) < 6:
-									print "\nclose enough"
-									score = score + 3
-								elif abs(challenge_note - message.note) >=6:
-									print "\nnot close enough"
-							num_trials = num_trials + 1
-							print "your score so far is:", score, ""
+
+			for message in pitchport:
+				print message
+				if "note_on" in message.type:
+					if message.velocity > 0:
+						print "\nMIDI note received was ", message.note
+						if abs(challenge_note - message.note) == 0:
+							print "\nexactly right"
+							score = score + 10
+						elif abs(challenge_note - message.note) < 6:
+							print "\nclose enough"
+							score = score + 3
+						elif abs(challenge_note - message.note) >=6:
+							print "\nnot close enough"
+					num_trials = num_trials + 1
+					print "your score so far is:", score, "out of", num_trials, "trials. \nOrgan Donor grade:", format(   (((float(score))/num_trials)*10.0),  '.2f'  )
 
 
 	
@@ -1324,7 +1326,8 @@ while ans:
 	elif ans=="4":
 		try:
 			#might need the port name in the out.reset() function
-			out.reset('USB2.0-MIDI 20:0')
+			#out.reset()
+			out.panic()
 			print "All notes reset. You have the conn."
 		except:
 			print "No output port found. You have the conn."
