@@ -1167,6 +1167,8 @@ def composer():
 			#print "The type of the most common element in the table is ", type(p.sort(reverse = True)[0][0])
 			
 			
+			#fix this like in composer
+			#needs to be a function?
 			
 			if type(p.sort(reverse = True)[0][0]) is str:
 				previous_note = p.sort(reverse = True)[1][0]
