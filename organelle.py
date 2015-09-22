@@ -95,7 +95,7 @@ except:
 	print "Failed to open a MIDO output port, but going on with the rest of the show."
 
 
-try:
+try:	
 	pitchport = mido.open_input('MPKmini2 24:0')
 except:
 	pass
@@ -260,11 +260,19 @@ def pitch_game():
 		Press 9 to quit.
 		Press any other key for challenge notes.
 		""")
-		ans=raw_input("What would you like to do? ")
-		if ans=="9":
+		ans2=raw_input("What would you like to do? ")
+		if ans2=="9":
 			print "\nYour final score is:", score 
 			ans2 = None
 		else:
+			try:	
+				pitchport = mido.open_input('MPKmini2 16:0')
+			except:
+				pass
+				print "Failed to open a MIDO input port for the pitch game."
+				ans2 = None
+				print "\nans2 is now", ans2
+
 			# randrange gives you an integral value between the two values, inclusive
 			irand = random.randint(0, 12)
 			challenge_note = i + irand
@@ -305,21 +313,28 @@ def pitch_game():
 
 			#message = mido.ports.BaseInput.receive(pitchport, block=True)
 
-			for message in pitchport:
-				print message
-				if "note_on" in message.type:
-					if message.velocity > 0:
-						print "\nMIDI note received was ", message.note
-						if abs(challenge_note - message.note) == 0:
-							print "\nexactly right"
-							score = score + 10
-						elif abs(challenge_note - message.note) < 6:
-							print "\nclose enough"
-							score = score + 3
-						elif abs(challenge_note - message.note) >=6:
-							print "\nnot close enough"
-					num_trials = num_trials + 1
-					print "your score so far is:", score, "out of", num_trials, "trials. \nOrgan Donor grade:", format(   (((float(score))/num_trials)*10.0),  '.2f'  )
+
+			while ans2:
+				for message in pitchport:
+					print message
+					if "note_on" in message.type:
+						if message.velocity > 0:
+							print "\nMIDI note received from you was ", message.note
+							if abs(challenge_note - message.note) == 0:
+								print "\nexactly right"
+								score = score + 10
+							elif abs(challenge_note - message.note) < 6:
+								print "\nclose enough"
+								score = score + 3
+							elif abs(challenge_note - message.note) >=6:
+								print "\nnot close enough"
+						try:
+							out.send(message)
+						except:
+							pass
+							print "Failed to send received message to the output port"
+						num_trials = num_trials + 1
+						print "your score so far is:", score, "out of", num_trials, "trials. \nOrgan Donor grade:", format(   (((float(score))/num_trials)*10.0),  '.2f'  )
 
 
 	
@@ -1289,6 +1304,109 @@ def jukebox(n):
 
 
 
+						
+
+
+
+
+
+
+
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#	Theremin Game
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def theremin():
+	num_trials = 0
+	score = 0
+	#base note. 69 is middle C, but maybe it should be lower.
+	#it would be better to do a plus/minus to the base note.
+	i = 69
+	ans2=True
+	
+	while ans2:
+		print("""
+		Theremin
+		
+		Press 9 to quit.
+		Press any other key to play
+		""")
+		ans2=raw_input("What would you like to do? ")
+		if ans2=="9":
+			print "\nReturning to main menu."
+			ans2 = None
+		else:
+			try:	
+				thereminport = mido.open_input('USB2.0-MIDI 16:0')
+			except:
+				pass
+				print "Failed to open a MIDO input port for the theremin."
+				ans2 = None
+
+			# randrange gives you an integral value between the two values, inclusive
+			irand = random.randint(0, 12)
+			challenge_note = i + irand
+			
+			print "Test note."
+			print "The value added to middle C was ", irand, "for a played note of", challenge_note
+			
+
+
+			
+			my_on_message = mido.Message('note_on', note=challenge_note, velocity=100)
+			print my_on_message
+			try:
+				out.send(my_on_message)
+			except:
+				pass
+				print "Failed to open a MIDO output port for note_on message for note {}".format(challenge_note)
+			time.sleep(1)
+			my_off_message = mido.Message('note_off', note=challenge_note, velocity=100)
+			print my_off_message
+			try:
+				out.send(my_off_message)
+			except:
+				pass
+				print "Failed to open a MIDO output port for note_off message for note {}".format(challenge_note)
+			time.sleep(1)			
+
+
+			#wait for response from manual or keyboard
+			#return the next message. This will block until a message arrives.
+			#If you pass block=False it will not block 
+			#and instead return None if there is no available message.
+
+			#response = mido.ports.BaseInput.receive(block=True)
+			#print response
+			
+			print "\nWaiting for messages from theremin"
+			#set up fake input for testing without a port
+			#message = mido.Message('note_on', note=(challenge_note - random.randint(0, 12)), velocity=100)
+
+			#message = mido.ports.BaseInput.receive(pitchport, block=True)
+
+			while ans2:
+				for message in thereminport:
+					print message
+					print "Trying to play a theremin message through output port"
+					out.send(message)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1340,7 +1458,7 @@ while ans:
 		entropy_toy()
 	elif ans=="7":
 		print("\nTheremin Activated!")
-		erase_old_files()
+		theremin()
 	elif ans=="8":
 		print("\nPitch Game starting soon. Hope you have perfect pitch! (Just kidding. Get close enough to the note and it will count.)")
 		pitch_game()
