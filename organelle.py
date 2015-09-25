@@ -806,6 +806,7 @@ def entropy_toy():
 							out.send(message)
 						except:
 							print "I can't find a midi out port so setting a pass flag."
+							print "This means we won't actually send the midi messages out the port."
 							midi_write_pass_flag = 1
 							print "midi_write_pass_flag is ", midi_write_pass_flag
 							pass
@@ -836,21 +837,21 @@ def entropy_toy():
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def select_random_song():
 
-	print "selecting a random midi file for you"
+	print "selecting a random midi file for you..."
 	#os.chdir(mypath+"/songs")
 	#get current working directory for file list building
 	mypath = os.getcwd()
-	print "Home directory for all this work is ", mypath
+	#print "Home directory for all this work is ", mypath
 	os.chdir(mypath+"/songs")
 	songspath = os.getcwd()
-	print "The songs directory is", songspath
+	#print "The songs directory is", songspath
 	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
 
 	print "here's all %d files in the song directory" % len(onlyfiles)
 	print onlyfiles
 
 	mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
-	print "%s is a random file from the songs directory" % mysong
+	print "%s is the selected random song from the songs directory" % mysong
 
 
 	#create a midi object from the midi file
@@ -902,7 +903,7 @@ def composer():
 	
 
 	mid = select_random_song()
-	print "after select_random_song, the current directory is", os.getcwd(), "and the mid is", mid
+	#print "after select_random_song, the current directory is", os.getcwd(), "and the mid is", mid
 
 	#Get the timing under control
 	#Timing in MIDI files is all centered around beats. 
@@ -1307,28 +1308,29 @@ def jukebox(n):
 	midi_write_pass_flag = 0
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-	print "picking %d random files for you." % (n - 1)
-	mypath = os.getcwd()
-	print "Home directory for all this work is ", mypath
-	songspath = (mypath+"/songs")
-	print "The songs directory is", songspath
-	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
-	#print "here's all %d files in the song directory" % len(onlyfiles)
-	#print onlyfiles
-	os.chdir(songspath)
+#	print "picking %d random files for you." % (n - 1)
+#	mypath = os.getcwd()
+#	print "Home directory for all this work is ", mypath
+#	songspath = (mypath+"/songs")
+#	print "The songs directory is", songspath
+#	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
+#	#print "here's all %d files in the song directory" % len(onlyfiles)
+#	#print onlyfiles
+#	os.chdir(songspath)
 	for x in xrange(1, n):
-		mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
-		print "%s is the current random file from the songs directory" % mysong
-		#create a midi object from the midi file
-		mid = MidiFile(mysong)
-		#print "The current mido object is %s " % mid
+#		mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
+#		print "%s is the current random file from the songs directory" % mysong
+#		#create a midi object from the midi file
+#		mid = MidiFile(mysong)
+		mid = select_random_song()
+		print "The current mido object is %s " % mid
 		#You can get the total playback time in seconds by accessing the length property:
-		print "Total playback time of %s is %f seconds." % (mysong, mid.length)
+		print "Total playback time is %f seconds." % (mid.length)
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		print "Song number %d is beginning." % x
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		for message in mid.play():
-			print message
+			#print message
 			if midi_write_pass_flag == 0:
 				try:
 					print "Trying to send out the midi out port in the jukebox function"
@@ -1342,7 +1344,7 @@ def jukebox(n):
 		print "Song number %d has ended." % x
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		x = x - 1
-	os.chdir(mypath)
+	print "I'm back in ", os.getcwd()
 
 
 
@@ -1361,79 +1363,48 @@ def jukebox(n):
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def theremin():
-	num_trials = 0
-	score = 0
-	#base note. 69 is middle C, but maybe it should be lower.
-	#it would be better to do a plus/minus to the base note.
-	i = 69
-	ans2=True
+	ans2 = True
 	
-	while ans2:
-		print("""
-		Theremin
-		
-		Press 9 to quit.
-		Press any other key to play
-		""")
-		ans2=raw_input("What would you like to do? ")
-		if ans2=="9":
-			print "\nReturning to main menu."
-			ans2 = None
-		else:
-			try:	
-				thereminport = mido.open_input('USB2.0-MIDI 16:0')
-			except:
-				pass
-				print "Failed to open a MIDO input port for the theremin."
-				ans2 = None
-
-			# randrange gives you an integral value between the two values, inclusive
-			irand = random.randint(0, 12)
-			challenge_note = i + irand
-			
-			print "Test note."
-			print "The value added to middle C was ", irand, "for a played note of", challenge_note
-			
+	try:	
+		thereminport = mido.open_input('USB2.0-MIDI 16:0')
+	except:
+		pass
+		print "Failed to open a MIDO input port for the theremin."
+		ans2 = None
 
 
-			
-			my_on_message = mido.Message('note_on', note=challenge_note, velocity=100)
-			print my_on_message
-			try:
-				out.send(my_on_message)
-			except:
-				pass
-				print "Failed to open a MIDO output port for note_on message for note {}".format(challenge_note)
+	if ans2 == True:		
+		my_on_message = mido.Message('note_on', note=60, velocity=100)
+		print my_on_message
+
+		try:
+			out.send(my_on_message)
+		except:
+			pass
+			print "Failed to open a MIDO output port for note_on message for note 60."
 			time.sleep(1)
-			my_off_message = mido.Message('note_off', note=challenge_note, velocity=100)
-			print my_off_message
-			try:
-				out.send(my_off_message)
-			except:
-				pass
-				print "Failed to open a MIDO output port for note_off message for note {}".format(challenge_note)
-			time.sleep(1)			
+			ans2 = None
+	
+	if ans2 == True:
+		my_off_message = mido.Message('note_off', note=60, velocity=100)
+		print my_off_message
 
 
-			#wait for response from manual or keyboard
-			#return the next message. This will block until a message arrives.
-			#If you pass block=False it will not block 
-			#and instead return None if there is no available message.
+		try:
+			out.send(my_off_message)
+		except:
+			pass
+			print "Failed to open a MIDO output port for note_off message for note 60."
+			time.sleep(0.1)
+			ans2 = None	
 
-			#response = mido.ports.BaseInput.receive(block=True)
-			#print response
-			
+
+		while ans2:
 			print "\nWaiting for messages from theremin"
-			#set up fake input for testing without a port
-			#message = mido.Message('note_on', note=(challenge_note - random.randint(0, 12)), velocity=100)
-
-			#message = mido.ports.BaseInput.receive(pitchport, block=True)
-
-			while ans2:
-				for message in thereminport:
-					print message
-					print "Trying to play a theremin message through output port"
-					out.send(message)
+			for message in thereminport:
+				print message
+				print "Trying to play a theremin message through output port"
+				out.send(message)
 
 
 
