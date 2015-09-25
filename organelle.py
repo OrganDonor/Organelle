@@ -746,12 +746,16 @@ def entropy_toy():
 			
 			
 			
-			if type(p.sort(reverse = True)[0][0]) is str:
+			print p.sort(reverse = True)
+			
+			#if type(p.sort(reverse = True)[0][0]) is str: #original
+			if p.sort(reverse = True)[0][0] == 'rest':
 				previous_note = p.sort(reverse = True)[1][0]
-				#print "most common note was a rest, so pick up the second result as previous_note, which was ", previous_note, "and is type", type(previous_note)
+				print "most common note was a rest, so pick up the second result as previous_note, which was ", previous_note
 			else:
 				previous_note = p.sort(reverse = True)[0][0]
-				#print "most common note was a note, which was ", previous_note, "and is type", type(previous_note)
+				print "most common note was a note, which was ", previous_note, "and is type", type(previous_note)
+
 			
 			
 			#print "The Mean First Passage Times of every note in the chain to the most common note is: ", P.mfpt_to(previous_note)
@@ -824,13 +828,13 @@ def entropy_toy():
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Select a random midi file 
-# from the songs directory
+# from the /songs directory
 # and make a MIDO object from that file.
-# Then play it.
+# Then return that MIDO object and 
+# return to the directory above /songs
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-def composer():
+def select_random_song():
 
 	print "selecting a random midi file for you"
 	#os.chdir(mypath+"/songs")
@@ -851,6 +855,54 @@ def composer():
 
 	#create a midi object from the midi file
 	mid = MidiFile(mysong)
+	
+	#go back to the directory above /songs
+	os.chdir(mypath)
+	
+	#return the midi object
+	return mid
+
+
+
+
+
+
+
+
+
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Select a random midi file 
+# from the songs directory
+# and make a MIDO object from that file.
+# Then play it.
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+def composer():
+	
+	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+	# initialize variables
+	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+	running_tick_total = 0
+	tempo = 500000
+	timestamps = {}
+	end_of_rest = 0
+	dictionary_non_zero_length = 0
+	rest_length_start = 0
+	double_on = 0
+	rest_delta = '0'
+	note_delta = '100'
+	skip_empty_track = 0
+	midi_write_pass_flag = 0
+	previous_note = 60
+	phrase_lengths = []
+	mypath = os.getcwd()
+	
+
+	mid = select_random_song()
+	print "after select_random_song, the current directory is", os.getcwd(), "and the mid is", mid
 
 	#Get the timing under control
 	#Timing in MIDI files is all centered around beats. 
@@ -872,22 +924,7 @@ def composer():
 	erase_old_files()
 
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-	# initialize variables
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-	running_tick_total = 0
-	tempo = 500000
-	timestamps = {}
-	end_of_rest = 0
-	dictionary_non_zero_length = 0
-	rest_length_start = 0
-	double_on = 0
-	rest_delta = '0'
-	note_delta = '100'
-	skip_empty_track = 0
-	midi_write_pass_flag = 0
-	previous_note = 60
-	phrase_lengths = []
+
 	
 	
 
@@ -902,6 +939,7 @@ def composer():
 	#enumerate through the tracks.
 	#for each track, put all the notes in that track in a text file.
 	#name the text file with the track number
+	
 	for i, track in enumerate(mid.tracks):
 		print('(notes and durations) Examining Track {}: {}'.format(i, track.name))
 		notes_file_name = mypath+"/{}_track_notes.txt".format(i)
@@ -1167,15 +1205,17 @@ def composer():
 			#print "The type of the most common element in the table is ", type(p.sort(reverse = True)[0][0])
 			
 			
-			#fix this like in composer
-			#needs to be a function?
+			print p.sort(reverse = True)
+
 			
-			if type(p.sort(reverse = True)[0][0]) is str:
+			#if type(p.sort(reverse = True)[0][0]) is str: #original
+			if p.sort(reverse = True)[0][0] == 'rest':
 				previous_note = p.sort(reverse = True)[1][0]
-				#print "most common note was a rest, so pick up the second result as previous_note, which was ", previous_note, "and is type", type(previous_note)
+				print "most common note was a rest, so pick up the second result as previous_note, which was ", previous_note
 			else:
 				previous_note = p.sort(reverse = True)[0][0]
-				#print "most common note was a note, which was ", previous_note, "and is type", type(previous_note)
+				print "most common note was a note, which was ", previous_note, "and is type", type(previous_note)
+
 			
 			
 			#print "The Mean First Passage Times of every note in the chain to the most common note is: ", P.mfpt_to(previous_note)
@@ -1219,7 +1259,7 @@ def composer():
 				#now attempt to play the new music object
 				#if no port is set up, then skip over trying to output to the midi port
 				for message in nmo_file.play():
-					print message
+					#print message
 					if midi_write_pass_flag == 0:
 						try:
 							print "Trying to send out the midi out port"
