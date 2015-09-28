@@ -1,14 +1,17 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#   Set up a port OK
-#   Parse a file for notes OK 
-#   Parse notes for durations OK
-#   Parse rests for durations OK
-#   Make a markov chain from the notes OK
-#   Make a markov chain from the durations OK
-#   Choose a random file OK
-#   Play that random file OK  
-#   Create a file from the markov chain transition table OK
-#   Make a simple user interface OK
+#	 
+#	Pull out delete old files to funtion OK
+#	Pull out test_tones() to function OK
+#	Set up a port OK
+#	Parse a file for notes OK 
+#	Parse notes for durations OK
+#	Parse rests for durations OK
+#	Make a markov chain from the notes OK/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_4.mid
+#	Make a markov chain from the durations OK
+#	Choose a random file OK
+#	Play that random file OK  
+#	Create a file from the markov chain transition table OK
+#	Make a simple user interface OK
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
@@ -27,6 +30,7 @@ import pysparse
 
 #import random
 import random
+
 
 #import os
 import os
@@ -56,6 +60,7 @@ from itertools import islice
 from collections import deque
 
 
+
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # setup rtmidi as our backend
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -64,26 +69,37 @@ from collections import deque
 mido.set_backend('mido.backends.rtmidi')
 print "Backend selected is %s " % mido.backend
 
-#open up a rtmidi output port for playing midi files
+#find out available APIs
+print "Available APIs are:", mido.backend.module.get_api_names()
+
+#find what the input ports are called
+print "Input port names are:", mido.get_input_names()
+
+#find what the output ports are called
+print "Output port names are:", mido.get_output_names()
+
+#find out what the input-output ports are called
+print "Input-Output port names are:", mido.get_ioport_names()
+
+loaded_result = mido.backend.loaded
+print "Was backend module loaded?", loaded_result
+
+#Open up a rtmidi output port for playing midi files.
+#The name of the output port may have to be an argument: 
+#out = mido.open_output('Name Here')
 
 try:
-	out = mido.open_output()
+	out = mido.open_output('USB2.0-MIDI 20:0')
 except:
 	pass
 	print "Failed to open a MIDO output port, but going on with the rest of the show."
 
-##test port by generating some tones
-##turn this off when you don't have anything hooked up
-#print "Test tones!"
-#for i in range(36,45):
-#	my_on_message = mido.Message('note_on', note=i, velocity=100)
-#	print my_on_message
-#	out.send(my_on_message)
-#	time.sleep(0.2)
-#	my_off_message = mido.Message('note_off', note=i, velocity=100)
-#	print my_off_message
-#	out.send(my_off_message)
-#	time.sleep(0.05)
+
+try:	
+	pitchport = mido.open_input('MPKmini2 24:0')
+except:
+	pass
+	print "Failed to open a MIDO input port for the pitch game."
 
 
 
@@ -118,6 +134,32 @@ except:
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
+
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#	Test Tones
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def test_tones():	
+	print "Test tones!"
+	for i in range(36,45):
+		my_on_message = mido.Message('note_on', note=i, velocity=100)
+		print my_on_message
+		try:
+			out.send(my_on_message)
+		except:
+			pass
+			print "Failed to open a MIDO output port for note_on message number {}".format(i)
+		time.sleep(0.2)
+		my_off_message = mido.Message('note_off', note=i, velocity=100)
+		print my_off_message
+		try:
+			out.send(my_off_message)
+		except:
+			pass
+			print "Failed to open a MIDO output port for note_off message number {}".format(i)
+		time.sleep(0.05)
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -158,6 +200,146 @@ def is_non_zero_file(fpath):
 
 
 
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# erase all old files
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+def erase_old_files():
+	mypath = os.getcwd()
+	for i in range(0, 17):
+		if os.path.isfile(mypath+"/{}_track_contents.txt".format(i)):
+			os.remove(mypath+"/{}_track_contents.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_durations.txt".format(i)):
+			os.remove(mypath+"/{}_track_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_track_transition_table.txt".format(i))
+			
+		if os.path.isfile(mypath+"/{}_track_notes.txt".format(i)):
+			os.remove(mypath+"/{}_track_notes.txt".format(i))
+		if os.path.isfile(mypath+"/{}_track_notes_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_track_notes_transition_table.txt".format(i))
+			
+		if os.path.isfile(mypath+"/{}_rest_durations.txt".format(i)):
+			os.remove(mypath+"/{}_rest_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_rest_durations_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_rest_durations_transition_table.txt".format(i))
+
+		if os.path.isfile(mypath+"/{}_note_durations.txt".format(i)):
+			os.remove(mypath+"/{}_note_durations.txt".format(i))
+		if os.path.isfile(mypath+"/{}_note_durations_transition_table.txt".format(i)):
+			os.remove(mypath+"/{}_note_durations_transition_table.txt".format(i))
+
+		if os.path.isfile(mypath+"/nmo_track_{}.txt".format(i)):
+			os.remove(mypath+"/nmo_track_{}.txt".format(i))
+		if os.path.isfile(mypath+"/nmo_track_{}.mid".format(i)):
+			os.remove(mypath+"/nmo_track_{}.mid".format(i))
+		print "\nErased the old files listed for track {}.".format(i)
+
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#	Pitch Game
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def pitch_game():
+	num_trials = 0
+	score = 0
+	#base note. 69 is middle C, but maybe it should be lower.
+	#it would be better to do a plus/minus to the base note.
+	i = 69	
+	ans2=True
+	
+	while ans2:
+		print("""
+		Pitch Game
+		Copy the note or notes that are played. 
+		The closer you are, the higher the score!
+		
+		Press 9 to quit.
+		Press any other key for challenge notes.
+		""")
+		ans2=raw_input("What would you like to do? ")
+		if ans2=="9":
+			print "\nYour final score is:", score 
+			ans2 = None
+		else:
+			try:	
+				pitchport = mido.open_input('MPKmini2 16:0')
+			except:
+				pass
+				print "Failed to open a MIDO input port for the pitch game."
+				ans2 = None
+				print "\nans2 is now", ans2
+
+			# randrange gives you an integral value between the two values, inclusive
+			irand = random.randint(0, 12)
+			challenge_note = i + irand
+			
+			print "Play back this note."
+			print "The value added to middle C was ", irand, "for a played note of", challenge_note
+			
+
+
+			
+			my_on_message = mido.Message('note_on', note=challenge_note, velocity=100)
+			print my_on_message
+			try:
+				out.send(my_on_message)
+			except:
+				pass
+				print "Failed to open a MIDO output port for note_on message for note {}".format(challenge_note)
+			time.sleep(1)
+			my_off_message = mido.Message('note_off', note=challenge_note, velocity=100)
+			print my_off_message
+			try:
+				out.send(my_off_message)
+			except:
+				pass
+				print "Failed to open a MIDO output port for note_off message for note {}".format(challenge_note)
+			time.sleep(1)			
+			#wait for response from manual or keyboard
+			#return the next message. This will block until a message arrives.
+			#If you pass block=False it will not block 
+			#and instead return None if there is no available message.
+
+			#response = mido.ports.BaseInput.receive(block=True)
+			#print response
+			
+			print "\nWaiting for messages from keyboard"
+			#set up fake input for testing without a port
+			#message = mido.Message('note_on', note=(challenge_note - random.randint(0, 12)), velocity=100)
+
+			#message = mido.ports.BaseInput.receive(pitchport, block=True)
+
+
+			while ans2:
+				for message in pitchport:
+					print message
+					if "note_on" in message.type:
+						if message.velocity > 0:
+							print "\nMIDI note received from you was ", message.note
+							if abs(challenge_note - message.note) == 0:
+								print "\nexactly right"
+								score = score + 10
+							elif abs(challenge_note - message.note) < 6:
+								print "\nclose enough"
+								score = score + 3
+							elif abs(challenge_note - message.note) >=6:
+								print "\nnot close enough"
+						try:
+							out.send(message)
+						except:
+							pass
+							print "Failed to send received message to the output port"
+						num_trials = num_trials + 1
+						print "your score so far is:", score, "out of", num_trials, "trials. \nOrgan Donor grade:", format(   (((float(score))/num_trials)*10.0),  '.2f'  )
+
+
+	
+	
+
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -169,53 +351,30 @@ def is_non_zero_file(fpath):
 
 def entropy_toy():
 	print "selecting a random midi file for you"
-	os.chdir("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/songs")
 	#get current working directory for file list building
 	mypath = os.getcwd()
-	onlyfiles = [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
+	print "Home directory for all this work is ", mypath
+	os.chdir(mypath+"/songs")
+	songspath = os.getcwd()
+	print "The songs directory is", songspath
+	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
 
-	#print "here's all %d files in the song directory" % len(onlyfiles)
-	#print onlyfiles
+	print "here's all %d files in the song directory" % len(onlyfiles)
+	print onlyfiles
 
 	mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
 	print "%s is a random file from the songs directory" % mysong
 
 	#create a midi object from the midi file
 	mid = MidiFile(mysong)
+	
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 	# erase all old files
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 			
-	for i in range(0, 17):
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(i))
-			
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(i))
-			
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(i))
+	erase_old_files()
 
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(i))
-
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.mid".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.mid".format(i))
-			
-			
 			
 			
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -249,11 +408,11 @@ def entropy_toy():
 	#name the text file with the track number
 	for i, track in enumerate(mid.tracks):
 		print('(notes and durations) Examining Track {}: {}'.format(i, track.name))
-		notes_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i)
-		contents_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i)
-		durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i)
-		rest_durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i)
-		note_durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i)
+		notes_file_name = mypath+"/{}_track_notes.txt".format(i)
+		contents_file_name = mypath+"/{}_track_contents.txt".format(i)
+		durations_file_name = mypath+"/{}_track_durations.txt".format(i)
+		rest_durations_file_name = mypath+"/{}_rest_durations.txt".format(i)
+		note_durations_file_name = mypath+"/{}_note_durations.txt".format(i)
 		
 		n = open(notes_file_name, 'w+')
 		h = open(contents_file_name, 'w+')
@@ -380,7 +539,7 @@ def entropy_toy():
 	for j in range(0, i+1):
 
 			
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j)
+		file_name = mypath+"/{}_track_contents.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_track_contents.txt is empty".format(j)
 			#skip_empty_track is set whenever we have an empty track
@@ -388,9 +547,9 @@ def entropy_toy():
 			skip_empty_track = 1
 		else:
 			print "{}_track_contents.txt will be examined for entropy changes".format(j)
-			t = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j))
+			t = pykov.readtrj(mypath+"/{}_track_contents.txt".format(j))
 			p, P = pykov.maximum_likelihood_probabilities(t,lag_time=1)
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_track_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -404,7 +563,7 @@ def entropy_toy():
 			phrase_lengths.append(P.kemeny_constant())
 			#Generate a phrase of length equal to the Kemeny constant of the track
 			print "A phrase of kemeny length from this transition table is:", P.walk(int(P.kemeny_constant()))
-			entropy_file_length = num_lines = sum(1 for line in open("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j)))
+			entropy_file_length = num_lines = sum(1 for line in open(mypath+"/{}_track_contents.txt".format(j)))
 			print "{}_track_contents.txt is ".format(j), entropy_file_length, "lines long"
 			print "Now we're going to use the Kemeny Constant length as a sliding window for entropy."
 			
@@ -462,7 +621,7 @@ def entropy_toy():
 
 
 #			#this doesn't read in overlapping blocks, but might be useful for something
-#			with open("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j)) as entropy_file:
+#			with open(mypath+"/{}_track_contents.txt".format(j)) as entropy_file:
 #				while True:
 #					kemeny_chunk = list(islice(entropy_file, P.kemeny_constant()))
 #					print "kemeny chunk is", kemeny_chunk
@@ -476,15 +635,15 @@ def entropy_toy():
 			
 
 
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(j)
+		file_name = mypath+"/{}_track_notes.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_track_notes.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			print "{}_track_notes.txt will become a markov object and a new music object".format(j)
-			t = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(j))
+			t = pykov.readtrj(mypath+"/{}_track_notes.txt".format(j))
 			m, M = pykov.maximum_likelihood_probabilities(t,lag_time=1)
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_track_notes_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -500,21 +659,21 @@ def entropy_toy():
 
 		
 		
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(j)
+		file_name = mypath+"/{}_rest_durations.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_rest_durations.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			#process the track into a markov chain thing
 			print "{}_rest_durations.txt will become a markov object and a new music object".format(j)
-			u = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(j))
+			u = pykov.readtrj(mypath+"/{}_rest_durations.txt".format(j))
 			q, Q = pykov.maximum_likelihood_probabilities(u,lag_time=1)
 			print "if there aren't any rests to give a transition table, don't try to write one."
 			#print "sorted q is currently ", q.sort(reverse = True)
 			#print "Q is currently ", Q
 			if len(q) > 0:
 				rest_delta = (q.sort(reverse = True)[0])[0]
-				tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(j)
+				tt_file_name = mypath+"/{}_rest_durations_transition_table.txt".format(j)
 				k = open(tt_file_name, 'w+')
 				#p is a pykov vector. It's the probability distribution of all the notes in the track.
 				#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -525,18 +684,18 @@ def entropy_toy():
 				#print "When it does, it is", Q.kemeny_constant()
 			
 			
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(j)
+		file_name = mypath+"/{}_note_durations.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_note_durations.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			#process the track into a markov chain thing
 			print "{}_note_durations.txt will become a markov object and a new music object".format(j)
-			v = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(j))
+			v = pykov.readtrj(mypath+"/{}_note_durations.txt".format(j))
 			r, R = pykov.maximum_likelihood_probabilities(v,lag_time=1)
 			note_delta = (r.sort(reverse = True)[0])[0]
 			
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_note_durations_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -549,7 +708,7 @@ def entropy_toy():
 		#P.walk(n) gives a random walk of n notes based on the contents transition table. Returns an array.
 		#P.move(state) gives the next state based on the transition table. Returns a string here.
 		if skip_empty_track == 0:
-			nmo_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(j)
+			nmo_file_name = mypath+"/nmo_track_{}.txt".format(j)
 			l = open(nmo_file_name, 'w+')
 			print >>l, P.walk(100)
 			
@@ -587,12 +746,16 @@ def entropy_toy():
 			
 			
 			
-			if type(p.sort(reverse = True)[0][0]) is str:
+			print p.sort(reverse = True)
+			
+			#if type(p.sort(reverse = True)[0][0]) is str: #original
+			if p.sort(reverse = True)[0][0] == 'rest':
 				previous_note = p.sort(reverse = True)[1][0]
-				#print "most common note was a rest, so pick up the second result as previous_note, which was ", previous_note, "and is type", type(previous_note)
+				print "most common note was a rest, so pick up the second result as previous_note, which was ", previous_note
 			else:
 				previous_note = p.sort(reverse = True)[0][0]
-				#print "most common note was a note, which was ", previous_note, "and is type", type(previous_note)
+				print "most common note was a note, which was ", previous_note, "and is type", type(previous_note)
+
 			
 			
 			#print "The Mean First Passage Times of every note in the chain to the most common note is: ", P.mfpt_to(previous_note)
@@ -635,13 +798,15 @@ def entropy_toy():
 				
 				#now attempt to play the new music object
 				#if no port is set up, then skip over trying to output to the midi port
+				
 				for message in nmo_file.play():
 					if midi_write_pass_flag == 0:
 						try:
-							print "Trying to send out the midi out port"
+							print 'Attempting to play this new music object created from track {}.'.format(j)
 							out.send(message)
 						except:
-							print "I can't find a midi out port so setting a pass flag"
+							print "I can't find a midi out port so setting a pass flag."
+							print "This means we won't actually send the midi messages out the port."
 							midi_write_pass_flag = 1
 							print "midi_write_pass_flag is ", midi_write_pass_flag
 							pass
@@ -664,6 +829,52 @@ def entropy_toy():
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Select a random midi file 
+# from the /songs directory
+# and make a MIDO object from that file.
+# Then return that MIDO object and 
+# return to the directory above /songs
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def select_random_song():
+
+	print "selecting a random midi file for you..."
+	#os.chdir(mypath+"/songs")
+	#get current working directory for file list building
+	mypath = os.getcwd()
+	#print "Home directory for all this work is ", mypath
+	os.chdir(mypath+"/songs")
+	songspath = os.getcwd()
+	#print "The songs directory is", songspath
+	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
+
+	print "here's all %d files in the song directory" % len(onlyfiles)
+	print onlyfiles
+
+	mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
+	print "%s is the selected random song from the songs directory" % mysong
+
+
+	#create a midi object from the midi file
+	mid = MidiFile(mysong)
+	
+	#go back to the directory above /songs
+	os.chdir(mypath)
+	
+	#return the midi object
+	return mid
+
+
+
+
+
+
+
+
+
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Select a random midi file 
 # from the songs directory
 # and make a MIDO object from that file.
 # Then play it.
@@ -671,81 +882,7 @@ def entropy_toy():
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 def composer():
-
-	print "playing a random midi file for you"
-
-	os.chdir("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/songs")
-	#get current working directory for file list building
-	mypath = os.getcwd()
-	onlyfiles = [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
-
-	#print "here's all %d files in the song directory" % len(onlyfiles)
-	#print onlyfiles
-
-
-
-	mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
-	print "%s is a random file from the songs directory" % mysong
-
-	#create a midi object from the midi file
-	mid = MidiFile(mysong)
-
-	#Get the timing under control
-	#Timing in MIDI files is all centered around beats. 
-	#A beat is the same as a quarter note.
-	#Tempo is given in microseconds per beat, and beats are divided into ticks.
-	#The default tempo is 500000 microseconds per beat, 
-	#which is half a second per beat or 120 beats per minute. 
-	#The meta message 'set_tempo' can be used to change tempo during a song.
-	#class mido.MidiFile(filename=None, type=1, ticks_per_beat=480, charset='latin1')
-
-
-	#print "mid.ticks_per_beat is %s " % mid.ticks_per_beat
-	#print "mid.tempo is %s " % mid.tempo
-
-
-
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-	# erase all old files
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-			
-	for i in range(0, 17):
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(i))
-			
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(i))
-			
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(i))
-
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(i))
-
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(i))
-		if os.path.isfile("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.mid".format(i)):
-			os.remove("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.mid".format(i))
-
-
-
-
-			
-
-			
-			
-
-
+	
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 	# initialize variables
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -762,6 +899,33 @@ def composer():
 	midi_write_pass_flag = 0
 	previous_note = 60
 	phrase_lengths = []
+	mypath = os.getcwd()
+	
+
+	mid = select_random_song()
+	#print "after select_random_song, the current directory is", os.getcwd(), "and the mid is", mid
+
+	#Get the timing under control
+	#Timing in MIDI files is all centered around beats. 
+	#A beat is the same as a quarter note.
+	#Tempo is given in microseconds per beat, and beats are divided into ticks.
+	#The default tempo is 500000 microseconds per beat, 
+	#which is half a second per beat or 120 beats per minute. 
+	#The meta message 'set_tempo' can be used to change tempo during a song.
+	#class mido.MidiFile(filename=None, type=1, ticks_per_beat=480, charset='latin1')
+
+
+	#print "mid.ticks_per_beat is %s " % mid.ticks_per_beat
+	#print "mid.tempo is %s " % mid.tempo
+
+
+	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+	# erase all old files
+	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+	erase_old_files()
+
+
+
 	
 	
 
@@ -776,13 +940,14 @@ def composer():
 	#enumerate through the tracks.
 	#for each track, put all the notes in that track in a text file.
 	#name the text file with the track number
+	
 	for i, track in enumerate(mid.tracks):
 		print('(notes and durations) Examining Track {}: {}'.format(i, track.name))
-		notes_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(i)
-		contents_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(i)
-		durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_durations.txt".format(i)
-		rest_durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(i)
-		note_durations_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(i)
+		notes_file_name = mypath+"/{}_track_notes.txt".format(i)
+		contents_file_name = mypath+"/{}_track_contents.txt".format(i)
+		durations_file_name = mypath+"/{}_track_durations.txt".format(i)
+		rest_durations_file_name = mypath+"/{}_rest_durations.txt".format(i)
+		note_durations_file_name = mypath+"/{}_note_durations.txt".format(i)
 		
 		n = open(notes_file_name, 'w+')
 		h = open(contents_file_name, 'w+')
@@ -909,7 +1074,7 @@ def composer():
 	for j in range(0, i+1):
 
 			
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j)
+		file_name = mypath+"/{}_track_contents.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_track_contents.txt is empty".format(j)
 			#skip_empty_track is set whenever we have an empty track
@@ -917,9 +1082,9 @@ def composer():
 			skip_empty_track = 1
 		else:
 			print "{}_track_contents.txt will become a markov object and a new music object".format(j)
-			t = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_contents.txt".format(j))
+			t = pykov.readtrj(mypath+"/{}_track_contents.txt".format(j))
 			p, P = pykov.maximum_likelihood_probabilities(t,lag_time=1)
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_track_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -935,15 +1100,15 @@ def composer():
 			print "A phrase of kemeny length from this transition table is:", P.walk(int(P.kemeny_constant()))
 
 
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(j)
+		file_name = mypath+"/{}_track_notes.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_track_notes.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			print "{}_track_notes.txt will become a markov object and a new music object".format(j)
-			t = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes.txt".format(j))
+			t = pykov.readtrj(mypath+"/{}_track_notes.txt".format(j))
 			m, M = pykov.maximum_likelihood_probabilities(t,lag_time=1)
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_track_notes_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_track_notes_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -955,21 +1120,21 @@ def composer():
 
 		
 		
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(j)
+		file_name = mypath+"/{}_rest_durations.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_rest_durations.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			#process the track into a markov chain thing
 			print "{}_rest_durations.txt will become a markov object and a new music object".format(j)
-			u = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations.txt".format(j))
+			u = pykov.readtrj(mypath+"/{}_rest_durations.txt".format(j))
 			q, Q = pykov.maximum_likelihood_probabilities(u,lag_time=1)
 			print "if there aren't any rests to give a transition table, don't try to write one."
 			#print "sorted q is currently ", q.sort(reverse = True)
 			#print "Q is currently ", Q
 			if len(q) > 0:
 				rest_delta = (q.sort(reverse = True)[0])[0]
-				tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_rest_durations_transition_table.txt".format(j)
+				tt_file_name = mypath+"/{}_rest_durations_transition_table.txt".format(j)
 				k = open(tt_file_name, 'w+')
 				#p is a pykov vector. It's the probability distribution of all the notes in the track.
 				#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -980,18 +1145,18 @@ def composer():
 				#print "When it does, it is", Q.kemeny_constant()
 			
 			
-		file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(j)
+		file_name = mypath+"/{}_note_durations.txt".format(j)
 		if not is_non_zero_file(file_name):
 			print "{}_note_durations.txt is empty".format(j)
 			skip_empty_track = 1
 		else:
 			#process the track into a markov chain thing
 			print "{}_note_durations.txt will become a markov object and a new music object".format(j)
-			v = pykov.readtrj("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations.txt".format(j))
+			v = pykov.readtrj(mypath+"/{}_note_durations.txt".format(j))
 			r, R = pykov.maximum_likelihood_probabilities(v,lag_time=1)
 			note_delta = (r.sort(reverse = True)[0])[0]
 			
-			tt_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/{}_note_durations_transition_table.txt".format(j)
+			tt_file_name = mypath+"/{}_note_durations_transition_table.txt".format(j)
 			k = open(tt_file_name, 'w+')
 			#p is a pykov vector. It's the probability distribution of all the notes in the track.
 			#P is a pykov chain. It's a transition table. Probability of one note followed by another. 
@@ -1004,7 +1169,7 @@ def composer():
 		#P.walk(n) gives a random walk of n notes based on the contents transition table. Returns an array.
 		#P.move(state) gives the next state based on the transition table. Returns a string here.
 		if skip_empty_track == 0:
-			nmo_file_name = "/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/nmo_track_{}.txt".format(j)
+			nmo_file_name = mypath+"/nmo_track_{}.txt".format(j)
 			l = open(nmo_file_name, 'w+')
 			print >>l, P.walk(100)
 			
@@ -1041,13 +1206,17 @@ def composer():
 			#print "The type of the most common element in the table is ", type(p.sort(reverse = True)[0][0])
 			
 			
+			print p.sort(reverse = True)
+
 			
-			if type(p.sort(reverse = True)[0][0]) is str:
+			#if type(p.sort(reverse = True)[0][0]) is str: #original
+			if p.sort(reverse = True)[0][0] == 'rest':
 				previous_note = p.sort(reverse = True)[1][0]
-				#print "most common note was a rest, so pick up the second result as previous_note, which was ", previous_note, "and is type", type(previous_note)
+				print "most common note was a rest, so pick up the second result as previous_note, which was ", previous_note
 			else:
 				previous_note = p.sort(reverse = True)[0][0]
-				#print "most common note was a note, which was ", previous_note, "and is type", type(previous_note)
+				print "most common note was a note, which was ", previous_note, "and is type", type(previous_note)
+
 			
 			
 			#print "The Mean First Passage Times of every note in the chain to the most common note is: ", P.mfpt_to(previous_note)
@@ -1091,6 +1260,7 @@ def composer():
 				#now attempt to play the new music object
 				#if no port is set up, then skip over trying to output to the midi port
 				for message in nmo_file.play():
+					#print message
 					if midi_write_pass_flag == 0:
 						try:
 							print "Trying to send out the midi out port"
@@ -1138,28 +1308,32 @@ def jukebox(n):
 	midi_write_pass_flag = 0
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-	print "picking %d random files for you." % (n - 1)
-	os.chdir("/Users/w5nyv/Dropbox/Pipe_Organ/MIDI/songs")
-	#get current working directory for file list building
-	mypath = os.getcwd()
-	onlyfiles = [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
-	#print "here's all %d files in the song directory" % len(onlyfiles)
-	#print onlyfiles
+#	print "picking %d random files for you." % (n - 1)
+#	mypath = os.getcwd()
+#	print "Home directory for all this work is ", mypath
+#	songspath = (mypath+"/songs")
+#	print "The songs directory is", songspath
+#	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
+#	#print "here's all %d files in the song directory" % len(onlyfiles)
+#	#print onlyfiles
+#	os.chdir(songspath)
 	for x in xrange(1, n):
-		mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
-		print "%s is the current random file from the songs directory" % mysong
-		#create a midi object from the midi file
-		mid = MidiFile(mysong)
-		#print "The current mido object is %s " % mid
+#		mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
+#		print "%s is the current random file from the songs directory" % mysong
+#		#create a midi object from the midi file
+#		mid = MidiFile(mysong)
+		mid = select_random_song()
+		print "The current mido object is %s " % mid
 		#You can get the total playback time in seconds by accessing the length property:
-		print "Total playback time of %s is %f seconds." % (mysong, mid.length)
+		print "Total playback time is %f seconds." % (mid.length)
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		print "Song number %d is beginning." % x
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		for message in mid.play():
+			#print message
 			if midi_write_pass_flag == 0:
 				try:
-					print "Trying to send out the midi out port"
+					print "Trying to send out the midi out port in the jukebox function"
 					out.send(message)
 				except:
 					print "I can't find a midi out port so setting a pass flag"
@@ -1170,6 +1344,79 @@ def jukebox(n):
 		print "Song number %d has ended." % x
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		x = x - 1
+	print "I'm back in ", os.getcwd()
+
+
+
+						
+
+
+
+
+
+
+
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#	Theremin Game
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def theremin():
+	ans2 = True
+	
+	try:	
+		thereminport = mido.open_input('USB2.0-MIDI 16:0')
+	except:
+		pass
+		print "Failed to open a MIDO input port for the theremin."
+		ans2 = None
+
+
+	if ans2 == True:		
+		my_on_message = mido.Message('note_on', note=60, velocity=100)
+		print my_on_message
+
+		try:
+			out.send(my_on_message)
+		except:
+			pass
+			print "Failed to open a MIDO output port for note_on message for note 60."
+			time.sleep(1)
+			ans2 = None
+	
+	if ans2 == True:
+		my_off_message = mido.Message('note_off', note=60, velocity=100)
+		print my_off_message
+
+
+		try:
+			out.send(my_off_message)
+		except:
+			pass
+			print "Failed to open a MIDO output port for note_off message for note 60."
+			time.sleep(0.1)
+			ans2 = None	
+
+
+		while ans2:
+			print "\nWaiting for messages from theremin"
+			for message in thereminport:
+				print message
+				print "Trying to play a theremin message through output port"
+				out.send(message)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1186,10 +1433,13 @@ while ans:
 	print("""
 	1.Play a random song
 	2.Play lots of random songs!
-	3.Generate new song from random MIDI file
+	3.Generate new tracks from random MIDI file
 	4.Just play keyboard
 	5.Exit/Quit
 	6.Entropy Toy
+	7.Play Theremin
+	8.Play Pitch Game
+	9:Test Tones
 	""")
 	ans=raw_input("What would you like to do? ")
 	if ans=="1":
@@ -1205,13 +1455,27 @@ while ans:
 	elif ans=="3":
 		composer()
 	elif ans=="4":
-		print("\n You have the conn")
-		#out.reset()
+		try:
+			#might need the port name in the out.reset() function
+			#out.reset()
+			out.panic()
+			print "All notes reset. You have the conn."
+		except:
+			print "No output port found. You have the conn."
+		
 	elif ans=="5":
 		print("\n Goodbye")
 		ans = None
 	elif ans=="6":
 		print("\nEntropy Toy Engaged")
 		entropy_toy()
+	elif ans=="7":
+		print("\nTheremin Activated!")
+		theremin()
+	elif ans=="8":
+		print("\nPitch Game starting soon. Hope you have perfect pitch! (Just kidding. Get close enough to the note and it will count.)")
+		pitch_game()
+	elif ans=="9":
+		test_tones()
 	else:
 		print("\n Not Valid Choice Try again")
