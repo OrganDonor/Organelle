@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #	 
 #	Pull out delete old files to funtion OK
@@ -30,6 +31,12 @@ import pysparse
 
 #import random
 import random
+
+#import sys for command line arguments
+import sys
+
+#import signal for interruptions from supervisor program
+import signal
 
 
 #import os
@@ -92,7 +99,11 @@ try:
 	out = mido.open_output('USB2.0-MIDI 20:0')
 except:
 	pass
-	print "Failed to open a MIDO output port, but going on with the rest of the show."
+	try:
+		out = mido.open_output('mio 20:0')
+	except:
+		pass
+		print "Failed to open a MIDO output port, but going on with the rest of the show."
 
 
 try:	
@@ -134,6 +145,15 @@ except:
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#	Turn off everything now playing
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def everything_off():
+	for mynote in range(1,128):
+		out.send(mido.Message('note_off', note=mynote, velocity=100))
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -1302,6 +1322,8 @@ def test(s):
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def jukebox(n):
+	global totally_done
+	
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 	# !!! initialize this variable? In each function
 	# that relies on this method? Check this. 
@@ -1323,23 +1345,28 @@ def jukebox(n):
 #		#create a midi object from the midi file
 #		mid = MidiFile(mysong)
 		mid = select_random_song()
-		print "The current mido object is %s " % mid
+		#print "The current mido object is %s " % mid
 		#You can get the total playback time in seconds by accessing the length property:
 		print "Total playback time is %f seconds." % (mid.length)
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
-		print "Song number %d is beginning." % x
+		print "Song number %d (of %d) is beginning." % (x,n-1)
+		print "You can also play the organ using the keyboards!"
+		print "Turn the rotary switch below to stop auto-play."
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		for message in mid.play():
 			#print message
+			if totally_done:
+				return
 			if midi_write_pass_flag == 0:
 				try:
-					print "Trying to send out the midi out port in the jukebox function"
+					#print "Trying to send out the midi out port in the jukebox function"
 					out.send(message)
 				except:
 					print "I can't find a midi out port so setting a pass flag"
 					midi_write_pass_flag = 1
 					print "midi_write_pass_flag is ", midi_write_pass_flag
 					pass
+		print
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		print "Song number %d has ended." % x
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
@@ -1363,6 +1390,8 @@ def jukebox(n):
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def theremin():
+	global totally_done
+	
 	ans2 = True
 	
 	try:	
@@ -1400,8 +1429,13 @@ def theremin():
 
 
 		while ans2:
+			if totally_done:
+				return
+				
 			print "\nWaiting for messages from theremin"
-			for message in thereminport:
+			for message in thereminport.iter_pending():
+				if totally_done:
+					return
 				print message
 				print "Trying to play a theremin message through output port"
 				out.send(message)
@@ -1415,6 +1449,20 @@ def theremin():
 
 
 
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#   Set up for interruption by the supervisor program
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+totally_done = False
+
+def cleanup(signum, frame):
+	global totally_done
+	
+	print "Cleaning up!"
+	out.reset()
+	everything_off()
+	totally_done = True
+
+signal.signal(signal.SIGUSR1, cleanup)
 
 
 
@@ -1422,6 +1470,36 @@ def theremin():
 
 
 
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#   Process Command Line arguments
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+if len(sys.argv) > 1:
+	ans = sys.argv[1]
+	if ans=="2":
+		print("\nPlaying %d random songs." % int(sys.argv[2]))
+		jukebox(int(sys.argv[2])+1)
+		print "Thank you for enjoying Organ Donor from San Diego, California!"
+		print "You can play the keyboards now."
+		print "Turn the rotary switch TWICE to restart auto-play mode."
+	elif ans=="4":
+		try:
+			out.reset()
+			everything_off()
+			print "Thank you for enjoying Organ Donor from San Diego, California!"
+			print "You have the conn. Play on the keyboads now!"
+			print "Turn the rotary switch below for auto-play mode."
+			while not totally_done:
+				pass
+		except:
+			print "No output port found, probably."
+	elif ans=="7":
+		print "\nTheremin activated!"
+		theremin()
+		
+	sys.exit()		# only one operation if we're run from the command line
+	
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
