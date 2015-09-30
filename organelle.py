@@ -119,20 +119,6 @@ except:
 
 
 
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Play a midi file in MIDO
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-
-#print "The current mido object is %s " % mid
-
-##You can get the total playback time in seconds by accessing the length property:
-#print "Total playback time of %s is %f." % (mysong, mid.length)
-
-##turn this off when nothing is hooked up
-#for message in mid.play():
-#	out.send(message)
-#	print message
 
 
 
@@ -144,6 +130,25 @@ except:
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+
+
+
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Play a midi file in MIDO
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def play_midi_object(mid):
+	print "The current mido object is %s " % mid
+
+	#You can get the total playback time in seconds by accessing the length property:
+	print "Total playback time is %f." % (mid.length)
+
+	for message in mid.play():
+		try:
+			out.send(message)
+		except:
+			pass
+			print "Sending to output port failed. It might not exist."
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
