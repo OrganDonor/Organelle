@@ -1505,10 +1505,29 @@ if len(sys.argv) > 1:
 				pass
 		except:
 			print "No output port found, probably."
-	elif ans=="7":
+	elif ans=="t":
 		print "\nTheremin activated!"
 		theremin()
-		
+		#no exit from theremin except to end the whole program
+	elif ans=="g":
+		print "\nRunning the pitch game for you."
+		pitch_game()
+		#no exit from pitch game except to end the whole program
+	elif ans=="p":
+		if len(sys.argv) < 3:
+			print "Not enough args for passthru"
+			sys.exit()
+		try:
+			out.reset()
+			everything_off()
+			print "you can now play the connected MIDI device %s" % sys.argv[3]
+			passthru(sys.argv[2].replace("_"," "))
+			#there's no exit from passthru() except to end the whole program
+		except:
+			print "Oops, looks like that device isn't connected."
+			while not totally_done:
+				pass
+
 	sys.exit()		# only one operation if we're run from the command line
 	
 
