@@ -1453,9 +1453,25 @@ def theremin():
 
 
 
-
-
-
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#   External MIDI Port Passthru
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def passthru(portname):
+	global totally_done
+	
+	try:
+		passport = mido.open_input(portname)
+	except:
+		pass
+		print "Failed to open port %s for passthru mode." % portname
+		
+	while not totally_done:
+		for message in passport.iter_pending():
+			if totally_done:
+				return
+			out.send(message)
 
 
 
