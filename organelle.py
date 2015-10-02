@@ -66,6 +66,9 @@ from rtmidi.midiconstants import *
 from itertools import islice
 from collections import deque
 
+#for using timers in games
+import time
+
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -74,22 +77,22 @@ from collections import deque
 
 #select rtmidi as our backend
 mido.set_backend('mido.backends.rtmidi')
-#print "Backend selected is %s " % mido.backend
+print "Backend selected is %s " % mido.backend
 
 #find out available APIs
-#print "Available APIs are:", mido.backend.module.get_api_names()
+print "Available APIs are:", mido.backend.module.get_api_names()
 
 #find what the input ports are called
-#print "Input port names are:", mido.get_input_names()
+print "Input port names are:", mido.get_input_names()
 
 #find what the output ports are called
-#print "Output port names are:", mido.get_output_names()
+print "Output port names are:", mido.get_output_names()
 
 #find out what the input-output ports are called
-#print "Input-Output port names are:", mido.get_ioport_names()
+print "Input-Output port names are:", mido.get_ioport_names()
 
 loaded_result = mido.backend.loaded
-#print "Was backend module loaded?", loaded_result
+print "Was backend module loaded?", loaded_result
 
 #Open up a rtmidi output port for playing midi files.
 #The name of the output port may have to be an argument: 
@@ -97,45 +100,19 @@ loaded_result = mido.backend.loaded
 
 try:
 	out = mido.open_output('USB2.0-MIDI 20:0')
+	try:
+		pitchport = mido.open_input('MPKmini2 24:0')
+	except:
+		pass
+		print "We're at home but the mini keyboard isn't hooked up."
 except:
 	pass
 	try:
-		out = mido.open_output('mio 20:0')
+		out = mido.open_output('mio 16:0')
+		pitchport = mido.open_input('mio 16:0')
 	except:
 		pass
 		print "Failed to open a MIDO output port, but going on with the rest of the show."
-
-
-#try:	
-#	pitchport = mido.open_input('MPKmini2 24:0')
-#except:
-#	pass
-#	print "Failed to open a MIDO input port for the pitch game."
-
-
-
-
-
-
-
-
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Play a midi file in MIDO
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-
-#print "The current mido object is %s " % mid
-
-##You can get the total playback time in seconds by accessing the length property:
-#print "Total playback time of %s is %f." % (mysong, mid.length)
-
-##turn this off when nothing is hooked up
-#for message in mid.play():
-#	out.send(message)
-#	print message
-
-
-
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -144,6 +121,25 @@ except:
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+
+
+
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Play a midi file in MIDO
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def play_midi_object(mid):
+	print "The current mido object is %s " % mid
+
+	#You can get the total playback time in seconds by accessing the length property:
+	print "Total playback time is %f." % (mid.length)
+
+	for message in mid.play():
+		try:
+			out.send(message)
+		except:
+			pass
+			print "Sending to output port failed. It might not exist."
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -261,103 +257,118 @@ def erase_old_files():
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #	Pitch Game
+#  A challenge note is played.
+#  participant has 10 seconds to match
+#  the note! Once note is matched, points
+#  are awarded and the next note is played.
+#  If correct note is not reached when time
+#  runs out then next challenge note is played.
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def pitch_game():
-	num_trials = 0
-	score = 0
-	#base note. 69 is middle C, but maybe it should be lower.
-	#it would be better to do a plus/minus to the base note.
-	i = 69	
-	ans2=True
+	global totally_done
+	while not totally_done:
+		still_there = 0
+		num_trials = 0
+		score = 0
+		#i is the base note. 69 is middle C, but maybe it should be lower.
+		#it would be better to do a plus/minus to the base note?
+		i = 36
 	
-	while ans2:
+
 		print("""
 		Pitch Game
 		Copy the note or notes that are played. 
 		The closer you are, the higher the score!
-		
-		Press 9 to quit.
-		Press any other key for challenge notes.
+		You have 10 seconds to match the note. 
 		""")
-		ans2=raw_input("What would you like to do? ")
-		if ans2=="9":
-			print "\nYour final score is:", score 
-			ans2 = None
-		else:
-			try:	
-				pitchport = mido.open_input('MPKmini2 16:0')
-			except:
-				pass
-				print "Failed to open a MIDO input port for the pitch game."
-				ans2 = None
-				print "\nans2 is now", ans2
+		
+#		try:	
+#			pitchport = mido.open_input('MPKmini2 16:0')
+#		except:
+#			pass
+#			print "Failed to open a MIDO input port for the pitch game."
 
-			# randrange gives you an integral value between the two values, inclusive
-			irand = random.randint(0, 12)
-			challenge_note = i + irand
+		# randrange gives you an integral value between the two values, inclusive
+		irand = random.randint(0, 96 - i)
+		challenge_note = i + irand
 			
-			print "Play back this note."
-			print "The value added to middle C was ", irand, "for a played note of", challenge_note
+		print "Play back this note."
+		print "The value added to",i," was ", irand, "for a played note of", challenge_note
 			
+		my_on_message = mido.Message('note_on', note=challenge_note, velocity=100)
+		print my_on_message
+		try:
+			out.send(my_on_message)
+		except:
+			pass
+			print "Failed to open a MIDO output port for note_on message for note {}".format(challenge_note)
+		time.sleep(3)
+		my_off_message = mido.Message('note_off', note=challenge_note, velocity=100)
+		print my_off_message
+		try:
+			out.send(my_off_message)
+		except:
+			pass
+			print "Failed to open a MIDO output port for note_off message for note {}".format(challenge_note)
+		time.sleep(.1)			
+		#wait for response from manual or keyboard
+		#return the next message. This will block until a message arrives.
+		#If you pass block=False it will not block 
+		#and instead return None if there is no available message.
 
+		#response = mido.ports.BaseInput.receive(block=True)
+		#print response
+			
+		print "\nYou should have heard the challenge note. Now match it on the keyboard."
+		#set up fake input for testing without a port
+		#message = mido.Message('note_on', note=(challenge_note - random.randint(0, 12)), velocity=100)
+
+		#message = mido.ports.BaseInput.receive(pitchport, block=True)
+
+		#tricky part. set up a timer. 
+
+		start = time.time()
+
+		while not totally_done:
+			print "waiting for correct note\n"
+			for message in pitchport.iter_pending():
+				print message
+				if totally_done:
+					return
+				if "note_on" in message.type:
+					still_there = 0
+					if message.velocity > 0:
+						print "\nMIDI note received from you was ", message.note
+						if abs(challenge_note - message.note) == 0:
+							print "\nexactly right"
+							score = score + 10
+						elif abs(challenge_note - message.note) < 6:
+							print "\nclose enough!"
+							score = score + 3
+						elif abs(challenge_note - message.note) >=6:
+							print "\nnot close enough"
+					try:
+						out.send(message)
+					except:
+						pass
+						print "Failed to send received message to the output port"
+					num_trials = num_trials + 1
+					print "your score so far is:", score, "out of", num_trials, "trials. \nOrgan Donor grade:", format(   (((float(score))/num_trials)*10.0),  '.2f'  )
 
 			
-			my_on_message = mido.Message('note_on', note=challenge_note, velocity=100)
-			print my_on_message
-			try:
-				out.send(my_on_message)
-			except:
-				pass
-				print "Failed to open a MIDO output port for note_on message for note {}".format(challenge_note)
-			time.sleep(1)
-			my_off_message = mido.Message('note_off', note=challenge_note, velocity=100)
-			print my_off_message
-			try:
-				out.send(my_off_message)
-			except:
-				pass
-				print "Failed to open a MIDO output port for note_off message for note {}".format(challenge_note)
-			time.sleep(1)			
-			#wait for response from manual or keyboard
-			#return the next message. This will block until a message arrives.
-			#If you pass block=False it will not block 
-			#and instead return None if there is no available message.
-
-			#response = mido.ports.BaseInput.receive(block=True)
-			#print response
-			
-			print "\nWaiting for messages from keyboard"
-			#set up fake input for testing without a port
-			#message = mido.Message('note_on', note=(challenge_note - random.randint(0, 12)), velocity=100)
-
-			#message = mido.ports.BaseInput.receive(pitchport, block=True)
+			if time.time() >= (start + 3):
+					print("Out of time")
+					still_there = still_there + 1
+					if still_there > 5:
+						while ((not totally_done) and (pitchport.pending() == 0)):
+							pass				
+					break
 
 
-			while ans2:
-				for message in pitchport:
-					print message
-					if "note_on" in message.type:
-						if message.velocity > 0:
-							print "\nMIDI note received from you was ", message.note
-							if abs(challenge_note - message.note) == 0:
-								print "\nexactly right"
-								score = score + 10
-							elif abs(challenge_note - message.note) < 6:
-								print "\nclose enough"
-								score = score + 3
-							elif abs(challenge_note - message.note) >=6:
-								print "\nnot close enough"
-						try:
-							out.send(message)
-						except:
-							pass
-							print "Failed to send received message to the output port"
-						num_trials = num_trials + 1
-						print "your score so far is:", score, "out of", num_trials, "trials. \nOrgan Donor grade:", format(   (((float(score))/num_trials)*10.0),  '.2f'  )
 
 
-	
+
 	
 
 
@@ -857,7 +868,7 @@ def entropy_toy():
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def select_random_song():
 
-	print "Selecting a random midi file for you ... ",
+	print "selecting a random midi file for you..."
 	#os.chdir(mypath+"/songs")
 	#get current working directory for file list building
 	mypath = os.getcwd()
@@ -867,12 +878,12 @@ def select_random_song():
 	#print "The songs directory is", songspath
 	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
 
-	#print "here's all %d files in the song directory" % len(onlyfiles)
-	#print onlyfiles
+	print "here's all %d files in the song directory" % len(onlyfiles)
+	print onlyfiles
 
 	mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
-	#print "%s is the selected random song from the songs directory" % mysong
-	print "%s" % mysong
+	print "%s is the selected random song from the songs directory" % mysong
+
 
 	#create a midi object from the midi file
 	mid = MidiFile(mysong)
@@ -1347,9 +1358,9 @@ def jukebox(n):
 		mid = select_random_song()
 		#print "The current mido object is %s " % mid
 		#You can get the total playback time in seconds by accessing the length property:
-		#print "Total playback time is %f seconds." % (mid.length)
+		print "Total playback time is %f seconds." % (mid.length)
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
-		print "Song number %d (of %d) will play for %d seconds." % (x,n-1,int(mid.length))
+		print "Song number %d (of %d) is beginning." % (x,n-1)
 		print "You can also play the organ using the keyboards!"
 		print "Turn the rotary switch below to stop auto-play."
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
@@ -1358,22 +1369,20 @@ def jukebox(n):
 			if totally_done:
 				return
 			if midi_write_pass_flag == 0:
-				if 'note_on' in message.type or 'note_off' in message.type:
-					try:
-						#print "Trying to send out the midi out port in the jukebox function"
-						out.send(message)
-					except:
-						print "I can't find a midi out port so setting a pass flag"
-						midi_write_pass_flag = 1
-						print "midi_write_pass_flag is ", midi_write_pass_flag
-						pass
-
+				try:
+					#print "Trying to send out the midi out port in the jukebox function"
+					out.send(message)
+				except:
+					print "I can't find a midi out port so setting a pass flag"
+					midi_write_pass_flag = 1
+					print "midi_write_pass_flag is ", midi_write_pass_flag
+					pass
 		print
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		print "Song number %d has ended." % x
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		x = x - 1
-	#print "I'm back in ", os.getcwd()
+	print "I'm back in ", os.getcwd()
 
 
 
@@ -1443,25 +1452,8 @@ def theremin():
 				out.send(message)
 
 
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#	External MIDI Port Passthru
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-def passthru(portname):
-	global totally_done
-	
-	try:
-		passport = mido.open_input(portname)
-	except:
-		pass
-		print "Failed to open port %s for passthru mode." % portname
-	
-	while not totally_done:
-		for message in passport.iter_pending():
-			if totally_done:
-				return
-			out.send(message)
+
+
 
 
 
@@ -1476,7 +1468,7 @@ totally_done = False
 def cleanup(signum, frame):
 	global totally_done
 	
-	#print "Cleaning up!"
+	print "Cleaning up!"
 	out.reset()
 	everything_off()
 	totally_done = True
@@ -1499,15 +1491,14 @@ if len(sys.argv) > 1:
 	if ans=="2":
 		print("\nPlaying %d random songs." % int(sys.argv[2]))
 		jukebox(int(sys.argv[2])+1)
-		print "Thank you for enjoying Organ Donor!"
+		print "Thank you for enjoying Organ Donor from San Diego, California!"
 		print "You can play the keyboards now."
 		print "Turn the rotary switch TWICE to restart auto-play mode."
 	elif ans=="4":
 		try:
 			out.reset()
-
 			everything_off()
-			print "Thank you for enjoying Organ Donor!"
+			print "Thank you for enjoying Organ Donor from San Diego, California!"
 			print "You have the conn. Play on the keyboads now!"
 			print "Turn the rotary switch below for auto-play mode."
 			while not totally_done:
@@ -1517,20 +1508,6 @@ if len(sys.argv) > 1:
 	elif ans=="7":
 		print "\nTheremin activated!"
 		theremin()
-	elif ans=="p":
-		if len(sys.argv) < 3:
-			print "Not enough args for passthru"
-			sys.exit()
-		try:
-			out.reset()
-			everything_off()
-			print "Thank you for enjoying Organ Donor!"
-			print "You can now play the connected MIDI device %s." % sys.argv[3]
-			passthru(sys.argv[2].replace("_"," "))
-		except:
-			print "Oops, looks like that device isn't connected."
-			while not totally_done:
-				pass	
 		
 	sys.exit()		# only one operation if we're run from the command line
 	
