@@ -74,22 +74,22 @@ from collections import deque
 
 #select rtmidi as our backend
 mido.set_backend('mido.backends.rtmidi')
-print "Backend selected is %s " % mido.backend
+#print "Backend selected is %s " % mido.backend
 
 #find out available APIs
-print "Available APIs are:", mido.backend.module.get_api_names()
+#print "Available APIs are:", mido.backend.module.get_api_names()
 
 #find what the input ports are called
-print "Input port names are:", mido.get_input_names()
+#print "Input port names are:", mido.get_input_names()
 
 #find what the output ports are called
-print "Output port names are:", mido.get_output_names()
+#print "Output port names are:", mido.get_output_names()
 
 #find out what the input-output ports are called
-print "Input-Output port names are:", mido.get_ioport_names()
+#print "Input-Output port names are:", mido.get_ioport_names()
 
 loaded_result = mido.backend.loaded
-print "Was backend module loaded?", loaded_result
+#print "Was backend module loaded?", loaded_result
 
 #Open up a rtmidi output port for playing midi files.
 #The name of the output port may have to be an argument: 
@@ -106,11 +106,11 @@ except:
 		print "Failed to open a MIDO output port, but going on with the rest of the show."
 
 
-try:	
-	pitchport = mido.open_input('MPKmini2 24:0')
-except:
-	pass
-	print "Failed to open a MIDO input port for the pitch game."
+#try:	
+#	pitchport = mido.open_input('MPKmini2 24:0')
+#except:
+#	pass
+#	print "Failed to open a MIDO input port for the pitch game."
 
 
 
@@ -119,6 +119,20 @@ except:
 
 
 
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Play a midi file in MIDO
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+
+#print "The current mido object is %s " % mid
+
+##You can get the total playback time in seconds by accessing the length property:
+#print "Total playback time of %s is %f." % (mysong, mid.length)
+
+##turn this off when nothing is hooked up
+#for message in mid.play():
+#	out.send(message)
+#	print message
 
 
 
@@ -130,25 +144,6 @@ except:
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
-
-
-
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Play a midi file in MIDO
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-def play_midi_object(mid):
-	print "The current mido object is %s " % mid
-
-	#You can get the total playback time in seconds by accessing the length property:
-	print "Total playback time is %f." % (mid.length)
-
-	for message in mid.play():
-		try:
-			out.send(message)
-		except:
-			pass
-			print "Sending to output port failed. It might not exist."
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -862,7 +857,7 @@ def entropy_toy():
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def select_random_song():
 
-	print "selecting a random midi file for you..."
+	print "Selecting a random midi file for you ... ",
 	#os.chdir(mypath+"/songs")
 	#get current working directory for file list building
 	mypath = os.getcwd()
@@ -872,12 +867,12 @@ def select_random_song():
 	#print "The songs directory is", songspath
 	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
 
-	print "here's all %d files in the song directory" % len(onlyfiles)
-	print onlyfiles
+	#print "here's all %d files in the song directory" % len(onlyfiles)
+	#print onlyfiles
 
 	mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
-	print "%s is the selected random song from the songs directory" % mysong
-
+	#print "%s is the selected random song from the songs directory" % mysong
+	print "%s" % mysong
 
 	#create a midi object from the midi file
 	mid = MidiFile(mysong)
@@ -1352,9 +1347,9 @@ def jukebox(n):
 		mid = select_random_song()
 		#print "The current mido object is %s " % mid
 		#You can get the total playback time in seconds by accessing the length property:
-		print "Total playback time is %f seconds." % (mid.length)
+		#print "Total playback time is %f seconds." % (mid.length)
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
-		print "Song number %d (of %d) is beginning." % (x,n-1)
+		print "Song number %d (of %d) will play for %d seconds." % (x,n-1,int(mid.length))
 		print "You can also play the organ using the keyboards!"
 		print "Turn the rotary switch below to stop auto-play."
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
@@ -1363,20 +1358,22 @@ def jukebox(n):
 			if totally_done:
 				return
 			if midi_write_pass_flag == 0:
-				try:
-					#print "Trying to send out the midi out port in the jukebox function"
-					out.send(message)
-				except:
-					print "I can't find a midi out port so setting a pass flag"
-					midi_write_pass_flag = 1
-					print "midi_write_pass_flag is ", midi_write_pass_flag
-					pass
+				if 'note_on' in message.type or 'note_off' in message.type:
+					try:
+						#print "Trying to send out the midi out port in the jukebox function"
+						out.send(message)
+					except:
+						print "I can't find a midi out port so setting a pass flag"
+						midi_write_pass_flag = 1
+						print "midi_write_pass_flag is ", midi_write_pass_flag
+						pass
+
 		print
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		print "Song number %d has ended." % x
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		x = x - 1
-	print "I'm back in ", os.getcwd()
+	#print "I'm back in ", os.getcwd()
 
 
 
@@ -1446,8 +1443,25 @@ def theremin():
 				out.send(message)
 
 
-
-
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#	External MIDI Port Passthru
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+def passthru(portname):
+	global totally_done
+	
+	try:
+		passport = mido.open_input(portname)
+	except:
+		pass
+		print "Failed to open port %s for passthru mode." % portname
+	
+	while not totally_done:
+		for message in passport.iter_pending():
+			if totally_done:
+				return
+			out.send(message)
 
 
 
@@ -1462,7 +1476,7 @@ totally_done = False
 def cleanup(signum, frame):
 	global totally_done
 	
-	print "Cleaning up!"
+	#print "Cleaning up!"
 	out.reset()
 	everything_off()
 	totally_done = True
@@ -1485,14 +1499,15 @@ if len(sys.argv) > 1:
 	if ans=="2":
 		print("\nPlaying %d random songs." % int(sys.argv[2]))
 		jukebox(int(sys.argv[2])+1)
-		print "Thank you for enjoying Organ Donor from San Diego, California!"
+		print "Thank you for enjoying Organ Donor!"
 		print "You can play the keyboards now."
 		print "Turn the rotary switch TWICE to restart auto-play mode."
 	elif ans=="4":
 		try:
 			out.reset()
+
 			everything_off()
-			print "Thank you for enjoying Organ Donor from San Diego, California!"
+			print "Thank you for enjoying Organ Donor!"
 			print "You have the conn. Play on the keyboads now!"
 			print "Turn the rotary switch below for auto-play mode."
 			while not totally_done:
@@ -1502,6 +1517,20 @@ if len(sys.argv) > 1:
 	elif ans=="7":
 		print "\nTheremin activated!"
 		theremin()
+	elif ans=="p":
+		if len(sys.argv) < 3:
+			print "Not enough args for passthru"
+			sys.exit()
+		try:
+			out.reset()
+			everything_off()
+			print "Thank you for enjoying Organ Donor!"
+			print "You can now play the connected MIDI device %s." % sys.argv[3]
+			passthru(sys.argv[2].replace("_"," "))
+		except:
+			print "Oops, looks like that device isn't connected."
+			while not totally_done:
+				pass	
 		
 	sys.exit()		# only one operation if we're run from the command line
 	
