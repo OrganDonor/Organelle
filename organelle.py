@@ -77,22 +77,22 @@ import time
 
 #select rtmidi as our backend
 mido.set_backend('mido.backends.rtmidi')
-print "Backend selected is %s " % mido.backend
+#print "Backend selected is %s " % mido.backend
 
 #find out available APIs
-print "Available APIs are:", mido.backend.module.get_api_names()
+#print "Available APIs are:", mido.backend.module.get_api_names()
 
 #find what the input ports are called
-print "Input port names are:", mido.get_input_names()
+#print "Input port names are:", mido.get_input_names()
 
 #find what the output ports are called
-print "Output port names are:", mido.get_output_names()
+#print "Output port names are:", mido.get_output_names()
 
 #find out what the input-output ports are called
-print "Input-Output port names are:", mido.get_ioport_names()
+#print "Input-Output port names are:", mido.get_ioport_names()
 
 loaded_result = mido.backend.loaded
-print "Was backend module loaded?", loaded_result
+#print "Was backend module loaded?", loaded_result
 
 #Open up a rtmidi output port for playing midi files.
 #The name of the output port may have to be an argument: 
@@ -267,21 +267,20 @@ def erase_old_files():
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def pitch_game():
 	global totally_done
-	while not totally_done:
-		still_there = 0
-		num_trials = 0
-		score = 0
-		#i is the base note. 69 is middle C, but maybe it should be lower.
-		#it would be better to do a plus/minus to the base note?
-		i = 36
-	
+	still_there = 0
+	num_notes = 0
+	score = 0
+	#i is the base note. 69 is middle C, but maybe it should be lower.
+	#it would be better to do a plus/minus to the base note?
+	i = 36
 
-		print("""
-		Pitch Game
-		Copy the note or notes that are played. 
-		The closer you are, the higher the score!
-		You have 10 seconds to match the note. 
-		""")
+
+	print("""
+	Pitch Game
+	Copy the note or notes that are played. 
+	The closer you are, the higher the score!
+	You have 10 seconds to match the note. 
+	""")
 		
 #		try:	
 #			pitchport = mido.open_input('MPKmini2 16:0')
@@ -289,15 +288,20 @@ def pitch_game():
 #			pass
 #			print "Failed to open a MIDO input port for the pitch game."
 
+	while not totally_done:
 		# randrange gives you an integral value between the two values, inclusive
 		irand = random.randint(0, 96 - i)
 		challenge_note = i + irand
-			
-		print "Play back this note."
-		print "The value added to",i," was ", irand, "for a played note of", challenge_note
+		num_notes = num_notes + 1
+		num_guesses = 0
+		this_score = 0
+		
+		time.sleep(1)
+		print "Listen carefully to this note."
+		#print "The value added to",i," was ", irand, "for a played note of", challenge_note
 			
 		my_on_message = mido.Message('note_on', note=challenge_note, velocity=100)
-		print my_on_message
+		#print my_on_message
 		try:
 			out.send(my_on_message)
 		except:
@@ -305,22 +309,21 @@ def pitch_game():
 			print "Failed to open a MIDO output port for note_on message for note {}".format(challenge_note)
 		time.sleep(3)
 		my_off_message = mido.Message('note_off', note=challenge_note, velocity=100)
-		print my_off_message
+		#print my_off_message
 		try:
 			out.send(my_off_message)
 		except:
 			pass
 			print "Failed to open a MIDO output port for note_off message for note {}".format(challenge_note)
-		time.sleep(.1)			
-		#wait for response from manual or keyboard
-		#return the next message. This will block until a message arrives.
-		#If you pass block=False it will not block 
-		#and instead return None if there is no available message.
-
-		#response = mido.ports.BaseInput.receive(block=True)
-		#print response
+		
+		# clear out the pending messages in case he's been pounding on the keyboard
+		for message in pitchport.iter_pending():
+			pass
 			
-		print "\nYou should have heard the challenge note. Now match it on the keyboard."
+		time.sleep(.3)
+		
+		#wait for response from manual or keyboard		
+		print "Now match the note you heard on the upper keyboard."
 		#set up fake input for testing without a port
 		#message = mido.Message('note_on', note=(challenge_note - random.randint(0, 12)), velocity=100)
 
@@ -329,9 +332,9 @@ def pitch_game():
 		#tricky part. set up a timer. 
 
 		start = time.time()
+		#print "Timer has started. Waiting for correct note.\n"
 
 		while not totally_done:
-			print "waiting for correct note\n"
 			for message in pitchport.iter_pending():
 				print message
 				if totally_done:
@@ -339,33 +342,50 @@ def pitch_game():
 				if "note_on" in message.type:
 					still_there = 0
 					if message.velocity > 0:
-						print "\nMIDI note received from you was ", message.note
+						num_guesses = num_guesses + 1
+						#print "\nMIDI note received from you was ", message.note
 						if abs(challenge_note - message.note) == 0:
-							print "\nexactly right"
-							score = score + 10
+							print "Exactly right!"
+							if this_score < 10:
+								this_score = 10
 						elif abs(challenge_note - message.note) < 6:
-							print "\nclose enough!"
-							score = score + 3
+							print "Pretty close!"
+							if this_score < 3:
+								this_score = 3
 						elif abs(challenge_note - message.note) >=6:
-							print "\nnot close enough"
-					try:
-						out.send(message)
-					except:
-						pass
-						print "Failed to send received message to the output port"
-					num_trials = num_trials + 1
-					print "your score so far is:", score, "out of", num_trials, "trials. \nOrgan Donor grade:", format(   (((float(score))/num_trials)*10.0),  '.2f'  )
+							print "Not close enough."
 
+						print "Your score so far is:", this_score, "after", num_guesses, "attempts."
+						if this_score < 10:
+							print "You still have some time. Keep trying!"
+
+			if this_score >= 10:
+				time.sleep(1)
+				# go on to the next note without waiting for the timer
+				break
 			
-			if time.time() >= (start + 3):
-					print("Out of time")
-					still_there = still_there + 1
-					if still_there > 5:
-						while ((not totally_done) and (pitchport.pending() == 0)):
-							pass				
-					break
-
-
+			elif time.time() >= (start + 5):
+				print("Sorry, you are out of time.")
+				#num_trials = num_trials + 1
+				if num_guesses == 0:
+					print "You didn't try to guess that one."
+				else:
+					print "You scored", this_score, "on that note."
+				score = score + this_score
+				print "Your score so far is:", score, "in", num_notes, "notes. \nOrgan Donor grade:", format(   (((float(score))/num_notes)*10.0),  '.2f'  )
+				still_there = still_there + 1
+				#print "Still there? is ", still_there
+				if still_there >= 5:
+					score = 0
+					num_notes = 0
+					print "Looks like nobody is playing. :-("
+					print "Press a key to play some more, or move the rotary switch."
+					while pitchport.pending() == 0:
+						if totally_done:
+							return
+					# discard the keystroke message that woke us back up.
+					message = pitchport.receive()
+				break
 
 
 
@@ -381,7 +401,7 @@ def pitch_game():
 
 
 def entropy_toy():
-	print "selecting a random midi file for you"
+	print "Selecting a random midi file ... ",
 	#get current working directory for file list building
 	mypath = os.getcwd()
 	print "Home directory for all this work is ", mypath
@@ -868,7 +888,7 @@ def entropy_toy():
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 def select_random_song():
 
-	print "selecting a random midi file for you..."
+	print "selecting a random midi file ... ",
 	#os.chdir(mypath+"/songs")
 	#get current working directory for file list building
 	mypath = os.getcwd()
@@ -878,12 +898,12 @@ def select_random_song():
 	#print "The songs directory is", songspath
 	onlyfiles = [ f for f in listdir(songspath) if isfile(join(songspath,f)) ]
 
-	print "here's all %d files in the song directory" % len(onlyfiles)
-	print onlyfiles
+	#print "here's all %d files in the song directory" % len(onlyfiles)
+	#print onlyfiles
 
 	mysong = onlyfiles[random.randint(0, len(onlyfiles)-1)]
-	print "%s is the selected random song from the songs directory" % mysong
-
+	#print "%s is the selected random song from the songs directory" % mysong
+	print "%s" % mysong
 
 	#create a midi object from the midi file
 	mid = MidiFile(mysong)
@@ -1358,9 +1378,9 @@ def jukebox(n):
 		mid = select_random_song()
 		#print "The current mido object is %s " % mid
 		#You can get the total playback time in seconds by accessing the length property:
-		print "Total playback time is %f seconds." % (mid.length)
+		#print "Total playback time is %f seconds." % (mid.length)
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
-		print "Song number %d (of %d) is beginning." % (x,n-1)
+		print "Song number %d (of %d) will play for %d seconds." % (x,n-1,int(mid.length))
 		print "You can also play the organ using the keyboards!"
 		print "Turn the rotary switch below to stop auto-play."
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
@@ -1382,7 +1402,7 @@ def jukebox(n):
 		print "Song number %d has ended." % x
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		x = x - 1
-	print "I'm back in ", os.getcwd()
+	#print "I'm back in ", os.getcwd()
 
 
 
@@ -1484,7 +1504,7 @@ totally_done = False
 def cleanup(signum, frame):
 	global totally_done
 	
-	print "Cleaning up!"
+	#print "Cleaning up!"
 	out.reset()
 	everything_off()
 	totally_done = True
