@@ -1389,14 +1389,16 @@ def jukebox(n):
 			if totally_done:
 				return
 			if midi_write_pass_flag == 0:
-				try:
-					#print "Trying to send out the midi out port in the jukebox function"
-					out.send(message)
-				except:
-					print "I can't find a midi out port so setting a pass flag"
-					midi_write_pass_flag = 1
-					print "midi_write_pass_flag is ", midi_write_pass_flag
-					pass
+				if 'note_on' in message.type or 'note_off' in message.type:
+					try:
+						#print "Trying to send out the midi out port in the jukebox function"
+						out.send(message)
+					except:
+						print "I can't find a midi out port so setting a pass flag"
+						midi_write_pass_flag = 1
+						print "midi_write_pass_flag is ", midi_write_pass_flag
+						pass
+
 		print
 		print "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 		print "Song number %d has ended." % x
@@ -1524,19 +1526,18 @@ signal.signal(signal.SIGUSR1, cleanup)
 
 if len(sys.argv) > 1:
 	ans = sys.argv[1]
+	print "Thank you for enjoying Organ Donor!"
 	if ans=="2":
 		print("\nPlaying %d random songs." % int(sys.argv[2]))
 		jukebox(int(sys.argv[2])+1)
-		print "Thank you for enjoying Organ Donor from San Diego, California!"
 		print "You can play the keyboards now."
-		print "Turn the rotary switch TWICE to restart auto-play mode."
+		print "Reselect auto-play on the rotary switch to hear more."
 	elif ans=="4":
 		try:
 			out.reset()
 			everything_off()
-			print "Thank you for enjoying Organ Donor from San Diego, California!"
 			print "You have the conn. Play on the keyboads now!"
-			print "Turn the rotary switch below for auto-play mode."
+			print "Turn the rotary switch below to activate other features."
 			while not totally_done:
 				pass
 		except:
@@ -1556,7 +1557,7 @@ if len(sys.argv) > 1:
 		try:
 			out.reset()
 			everything_off()
-			print "you can now play the connected MIDI device %s" % sys.argv[3]
+			print "You can now play the connected MIDI device %s." % sys.argv[3]
 			passthru(sys.argv[2].replace("_"," "))
 			#there's no exit from passthru() except to end the whole program
 		except:
