@@ -10,5 +10,5 @@ echo "             Welcome to Organ Donor from Sol Diego and Optimized Tomfooler
 echo "                          at San Diego Maker Faire 2015"
 echo
 cd Organelle
-sudo ./supervisor.py
+single.py -c ./supervisor.py
 
