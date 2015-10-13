@@ -184,6 +184,10 @@ def clean_exit():
 
 signal.signal(signal.SIGUSR1, sig_handler)
 
+# If we're running inside a terminal, the terminal program might
+# absorb the USR1 signal. It would then try to terminate us with HUP.
+signal.signal(signal.SIGHUP, sig_handler)
+
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #   Process Command Line arguments
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
