@@ -23,7 +23,8 @@ the same as the old program).
 
 """
 
-# Unfortunately, must run as root to use the built-in GPIO package.
+# If we're running on Raspbian Jessie, we can use GPIO without being root!
+# Otherwise, must run as root to use the built-in GPIO package.
 import RPi.GPIO as GPIO
 import sys, time
 import subprocess
@@ -47,7 +48,7 @@ programs = {  4: ("./organelle.py", "p MIDI4x4_20:0 MIDIPLUS_1"),
               5: ("./organelle.py", "4"),		# keyboards only
               6: ("./organelle.py", "4"),
              13: ("./organelle.py", "4"),
-             19: ("./organelle.py", "2 8"),		# auto-play
+             19: ("./jukebox.py",   "5"),		# auto-play
              26: ("./organelle.py", "t"),		# theremin
              23: ("./organelle.py", "g")		# pitch game
               }
