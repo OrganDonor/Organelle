@@ -329,6 +329,7 @@ def program_MTP(holes):
 	"""Send the MIDI commands to program a MTP.
 	The list of holes gives the windchest hole numbers associated with this MTP.
 	"""
+	configure_console(flagMidi=2, flagGhostBuster=0)
 	
 	for hole in holes:
 		play_note(notes[hole], 0.1)
@@ -338,7 +339,32 @@ def program_MTP(holes):
 	# Send impossible notes to fill up those positions on the MTP.
 	extras = 64 - len(holes)
 	for i in range(0, extras):
-		play_note((4,62), 0.1)		
+		play_note((4,62), 0.1)
+	
+	configure_console(flagMidi=1, flagGhostBuster=1)
+	flash_console()
+
+def configure_console(flagMidi=1, flagKBecho=1, flagGhostBuster=1):
+	"""Send a SysEx to the console to set the configuration flags.
+	Definitions copied from the Arduino code:
+// SysEx format:
+//  Byte#   Value     Meaning
+//    0       F0      Start of SysEx command, defined by MIDI standard
+//    1       7D      Manufacturer code reserved for "educational use"
+//    2       55      my command code for setting the flags
+//    3     0,1,2     flagMidi
+//    4    0 or 1     flagKBecho
+//	  5    0 or 1     flagGhostBuster
+//    etc. for more flags
+//    N       F7      End of SysEx command, defined by MIDI standard
+	"""
+	outport.send(mido.Message('sysex', data=[0x7d, 0x55, flagMidi, flagKBecho, flagGhostBuster]))
+
+def flash_console():
+	"""Send a SysEx to the console to make the buttons all flash once.
+	"""
+	outport.send(mido.Message('sysex', data=[0x7d, 0x50]))
+	time.sleep(0.20)		# wait for the flash to be done; console is while flashing
 	
 def play_note(note, duration):
 	"""Play a given note (rank,number) for a given duration in seconds. (Blocking!)
