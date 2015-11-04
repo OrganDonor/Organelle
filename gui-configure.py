@@ -142,6 +142,8 @@ def poll_midi():
 					if autorepeat == None:
 						autorepeat = root.after(autorepeat_interval, autorepeat_pitchwheel)
 			pitch = message.pitch
+		elif "control_change" in message.type:
+			set_active_entry(min(122, 128 - message.value))
 
 	root.after(50, poll_midi)
 
