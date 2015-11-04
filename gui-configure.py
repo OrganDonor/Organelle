@@ -112,7 +112,13 @@ autorepeat_interval = 200
 def poll_midi():
 	"""Poll the MIDI input port.
 	
-	Yes, this is slightly gross, but it's easy.
+	Polling might seem ugly here, but it is apparently the only way that works.
+	Mido can provide a callback when each message comes in, but that callback runs
+	on another thread, and Tkinter prohibits doing much of anything on another thread.
+	The other thread could enqueue a message to the main thread, but then apparently
+	the recommended way to check such a queue would be ... polling. If there were a
+	thread-safe way to put an event into Tkinter's main event queue, we could avoid
+	polling, but there apparently isn't.
 	"""
 	global pitch
 	global autorepeat
