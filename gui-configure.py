@@ -107,12 +107,15 @@ def handle_sigusr1(signum, frame):
 signal.signal(signal.SIGUSR1, handle_sigusr1)
 
 pitch = 0
+autorepeat = None
+autorepeat_interval = 200
 def poll_midi():
 	"""Poll the MIDI input port.
 	
 	Yes, this is slightly gross, but it's easy.
 	"""
 	global pitch
+	global autorepeat
 	
 	for message in inport.iter_pending():
 		if "note_on" in message.type:
@@ -126,12 +129,32 @@ def poll_midi():
 			if pitch == 0:
 				if message.pitch < 0:
 					do_left()
+					if autorepeat == None:
+						autorepeat = root.after(autorepeat_interval, autorepeat_pitchwheel)
 				elif message.pitch > 0:
 					do_right()
+					if autorepeat == None:
+						autorepeat = root.after(autorepeat_interval, autorepeat_pitchwheel)
 			pitch = message.pitch
 
 	root.after(50, poll_midi)
 
+def autorepeat_pitchwheel():
+	"""If the pitchwheel is held away from 0 for a time, treat that as multiple
+	commands equivalent to the left or right buttons.
+	"""
+	global pitch
+	global autorepeat
+	
+	if pitch < 0:
+		do_left()
+		autorepeat = root.after(autorepeat_interval, autorepeat_pitchwheel)
+	elif pitch > 0:
+		do_right()
+		autorepeat = root.after(autorepeat_interval, autorepeat_pitchwheel)
+	else:
+		autorepeat = None
+		
 
 def set_active_entry(num):
 	"""Move around the array of data entry fields, highlighting the current field
