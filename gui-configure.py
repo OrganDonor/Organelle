@@ -123,14 +123,15 @@ def poll_midi():
 			else:
 				print "Unknown channel", message.channel
 		elif "pitchwheel" in message.type:
-			if pitch == 0 and message.pitch != 0:
+			if pitch == 0:
 				if message.pitch < 0:
 					do_left()
 				elif message.pitch > 0:
 					do_right()
-				pitch = message.pitch
+			pitch = message.pitch
 
 	root.after(50, poll_midi)
+
 
 def set_active_entry(num):
 	"""Move around the array of data entry fields, highlighting the current field
