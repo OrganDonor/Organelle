@@ -4,6 +4,8 @@
 #
 # 2015-11 ptw
 
+desktop_debug_mode = True
+
 from Tkinter import *
 import tkFont
 
@@ -21,6 +23,8 @@ from os.path import isfile, join
 import mido
 from mido import MidiFile, MetaMessage
 import rtmidi
+
+from sequence_recognizer import SequenceRecognizer
 
 root_bg = "#bbb"
 
@@ -207,50 +211,7 @@ def key_position_offset(key_number):
 	octave = (0.0, 0.56, 0.0, 0.75, 0.0, 0.0, 0.50, 0.0, 0.62, 0.0, 0.79, 0.0)
 	return octave[(key_number-1) % 12]
 
-class WhiteKey():
-	"""On-screen widget displaying a white key on the keyboard.	
-	"""
-	def __init__(self, parent, key_number, offset, keyspacing, keyheight):
-		"""Initializer for white keys.
-					
-		Arguments:
-		parent -- the parent widget, typically a KeyboardDisplay
-		key_number -- the key number (1-based) within the KeyboardDisplay
-		offset -- the offset in pixels of the left edge of this key from the left edge of parent
-		keyspacing -- number of pixels used by each white key
-		keyheight -- number of pixels high for a white key
-		"""
-		self.key_number = key_number
-		self.parent = parent
-		self.rect = parent.create_rectangle(offset, 0, offset+keyspacing, keyheight-1, fill='white', outline='black', tags='white')
 
-	def note_on(self):
-		"""Visually highlight a key as being currently played."""
-		self.parent.itemconfig(self.rect, fill='red')
-		
-	def note_off(self):
-		"""Remove visual highlighting from a key."""
-		self.parent.itemconfig(self.rect, fill='white')
-		
-class BlackKey():
-	"""On-screen widget displaying a black key on the keyboard.
-	"""
-	def __init__(self, parent, key_number, offset, keyspacing, keyheight):
-		self.key_number = key_number
-		self.parent = parent
-		actual_offset = offset + key_position_offset(key_number)*keyspacing - keyspacing
-		black_key_width = int(0.57*keyspacing)
-		black_key_height = int(0.5*keyheight)
-		self.rect = parent.create_rectangle(actual_offset, 0, actual_offset+black_key_width, black_key_height-1, fill='black', outline='black', tags='black')
-	
-	def note_on(self):
-		"""Visually highlight a key as being currently played."""
-		self.parent.itemconfig(self.rect, fill='red')
-		
-	def note_off(self):
-		"""Remove visual highlighting from a key."""
-		self.parent.itemconfig(self.rect, fill='black')
-	
 class KeyboardDisplay(Canvas):
 	"""Display-only keyboard widget.
 	"""
@@ -258,44 +219,106 @@ class KeyboardDisplay(Canvas):
 		numkeys = kwargs.pop('keys', 61)
 		Canvas.__init__(self, *args, **kwargs)
 		self.config(bg='red', bd=0, highlightthickness=0)
-		height=self.winfo_reqheight()
+		self.height=self.winfo_reqheight()
 		white_count, black_count = white_and_black_for_total_keys(numkeys)
-		white_key_spacing = int((self.winfo_reqwidth()-1)/ white_count)
-		total_width = white_key_spacing * white_count + 1
+		self.key_spacing = int((self.winfo_reqwidth()-1)/ white_count)
+		total_width = self.key_spacing * white_count + 1
 		self.config(width=total_width)
-		self.keys = [None]	# dummy value for keys[0] to make 1-based addressing work
+		self.keyrects = [None]	# dummy value for keys[0] to make 1-based addressing work
 		offset = 0
 		for key in range(1, numkeys+1):
 			if iswhite(key):
-				self.keys.append(WhiteKey(parent=self, key_number=key, offset=offset, keyspacing=white_key_spacing, keyheight=height))
-				offset += white_key_spacing
+				self.keyrects.append(self.__create_white_keyrect(key_number=key, offset=offset))
+				offset += self.key_spacing
 			else:
-				self.keys.append(BlackKey(parent=self, key_number=key, offset=offset, keyspacing=white_key_spacing, keyheight=height))
+				self.keyrects.append(self.__create_black_keyrect(key_number=key, offset=offset))
 		self.tag_raise('black')
+				
+	def __create_white_keyrect(self, key_number, offset):
+		return self.create_rectangle(offset, 0, offset+self.key_spacing, self.height-1, fill='white', outline='black', tags='white')
+		
+	def __create_black_keyrect(self, key_number, offset):
+		actual_offset = offset + key_position_offset(key_number)*self.key_spacing - self.key_spacing
+		key_width = int(0.57 * self.key_spacing)
+		key_height = int(0.62 * self.height)
+		return self.create_rectangle(actual_offset, 0, actual_offset+key_width, key_height-1, fill='black', outline='black', tags='black')
 		
 	def note_on(self, pitch):
-		self.keys[pitch].note_on()
+		self.itemconfig(self.keyrects[pitch], fill='red')
 	
 	def note_off(self, pitch):
-		self.keys[pitch].note_off()
-		
+		if iswhite(pitch):
+			self.itemconfig(self.keyrects[pitch], fill='white')
+		else:
+			self.itemconfig(self.keyrects[pitch], fill='black')
+			
+					
+def keyboard_tapped(event):
+	"""User has tapped the screen inside one of the keyboards.
+	
+	This doesn't do anything normally visible, but we are listening to decode
+	a magic sequence of taps.
+	"""
+	# find_closest returns a tuple of one, even though the docs don't say so.
+	keyrect = event.widget.find_closest(event.x, event.y)[0]
+	# The values in keyrects are documented to be integers. On my machine, they are
+	# in fact sequential integers starting at 1, which is exactly what we want, but
+	# I can't find any documentation that promises that behavior. So, we need to use
+	# index() to look up the provided integer in the keyrects list.
+	key_number = event.widget.keyrects.index(keyrect)
+	
+	if event.widget is kb4:
+		event = (4, key_number)
+	elif event.widget is kb8:
+		event = (8, key_number)
+	else:
+		print "Unknown widget somehow sent us a tap!"
+	
+	print "Event", event
+	recognizer.step(event)
 
-button_quit = Button(root, text="Quit", command=do_quit)
+def launch_magic():
+	print "Launching the configurator."
+	os.execl("./gui-configure.py", "")		# runs the configurator in place of this program
+	print "This should not come out."
+	# does not return!
+
+def fat_fingers_match(first, second):
+	"""Compare two events, with slop for the uncertainty caused by fat fingers.
+	
+	The events are 2-tuples (rank, keynumber). We assume they can hit the right rank
+	reliably, but will be unable to hit an exact key since they're so small.
+	"""
+	if first[0] != second[0]:
+		return False
+	else:
+		return abs(first[1] - second[1]) < 4
+
 kb4 = KeyboardDisplay(root, width=750, height=125, bg="#fff", bd=0)
-button_dummy = Button(root, text="Dummy")
 kb8 = KeyboardDisplay(root, width=750, height=125, bg="#eee", bd=0)
 
-button_quit.pack()
-kb4.pack()
-button_dummy.pack()
-kb8.pack()
+kb4.bind("<Button-1>", keyboard_tapped)
+kb8.bind("<Button-1>", keyboard_tapped)
+
+kb4.pack(expand=1)
+kb8.pack(expand=1)
+
+recognizer = SequenceRecognizer(parent=root, timeout=5.0, deadtime=2.0,
+		success_command=launch_magic, match=fat_fingers_match,
+		sequence=[(4,8), (4,20), (4,32), (4,44), (4,56)]
+		)
+
+
+
 
 poll_midi()					# kick off a frequent poll of the MIDI input port
 
 # for debug, use the same screen size as the real screen, in a handy screen position.
-#root.geometry("800x480+50+50")
+if desktop_debug_mode:
+	root.geometry("800x480+50+50")
 # for real hardware, go full screen
-root.attributes("-fullscreen", True)
+else:
+	root.attributes("-fullscreen", True)
 
 """
 random_key = 0
