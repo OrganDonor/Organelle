@@ -4,8 +4,6 @@
 #
 # 2015-11 ptw
 
-desktop_debug_mode = True
-
 from Tkinter import *
 import tkFont
 
@@ -27,6 +25,8 @@ import rtmidi
 from sequence_recognizer import SequenceRecognizer
 
 root_bg = "#bbb"
+
+deployed_mode = isfile("deployed.txt")		# Create this file to go full-screen, etc.
 
 def initialize_MIDI_inout():
 	"""Initialize a MIDI input and output port using RTMIDI through mido
@@ -308,38 +308,14 @@ recognizer = SequenceRecognizer(parent=root, timeout=5.0, deadtime=2.0,
 		sequence=[(4,8), (4,20), (4,32), (4,44), (4,56)]
 		)
 
-
-
-
 poll_midi()					# kick off a frequent poll of the MIDI input port
 
-# for debug, use the same screen size as the real screen, in a handy screen position.
-if desktop_debug_mode:
-	root.geometry("800x480+50+50")
-# for real hardware, go full screen
-else:
+if deployed_mode:
 	root.attributes("-fullscreen", True)
+else:
+# for debug, use the same screen size as the real screen, in a handy screen position.
+	root.geometry("800x480+50+50")
 
-"""
-random_key = 0
-def bang_on_keyboard():
-	global random_key
-	
-	random_key = random.randint(1,61)
-	print "playing", random_key
-	button_dummy.config(state=NORMAL)
-	kb4.note_on(random_key)
-	root.after(1000, unbang)
-
-def unbang():
-	global random_key
-	
-	kb4.note_off(random_key)
-	button_dummy.config(state=DISABLED)
-	root.after(200, bang_on_keyboard)
-	
-bang_on_keyboard()
-"""
 
 root.mainloop()
 print("Here we are cleaning up.")

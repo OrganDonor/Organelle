@@ -1,0 +1,1 @@
+If this file exists, GUI Organelle programs will run in the standard full-screen mode.
