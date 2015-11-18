@@ -310,6 +310,8 @@ recognizer = SequenceRecognizer(parent=root, timeout=5.0, deadtime=2.0,
 
 poll_midi()					# kick off a frequent poll of the MIDI input port
 
+configure_console(flagKBecho=1)			# Make sure console is relaying keyboard input
+
 if deployed_mode:
 	root.attributes("-fullscreen", True)
 else:
