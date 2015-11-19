@@ -159,7 +159,6 @@ class TimeProgressLabel(Label):
 			self.after_cancel(self.seconds_updater)
 			self.seconds_updater = None
 		self.systime_offset = None
-		self.config(fg=inactive_color)
 
 	
 def everything_off():
