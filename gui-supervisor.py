@@ -46,9 +46,9 @@ programs = {  4: ("xterm", "-fullscreen -e ./organelle.py p MIDI4x4_20:0 MIDIPLU
              27: ("xterm", "-fullscreen -e ./organelle.py p MIDI4x4_20:2 MIDIPLUS_3"),
              22: ("xterm", "-fullscreen -e ./organelle.py p MIDI4x4_20:3 MIDIPLUS_4"),
               5: ("xterm", "-fullscreen -e ./organelle.py 4"),		# keyboards only
-              6: ("xterm", "-fullscreen -e ./organelle.py 4"),
-             13: ("xterm", "-fullscreen -e ./organelle.py 4"),
-             19: ("xterm", "-fullscreen -e ./jukebox.py 5"),		# auto-play
+              6: ("./gui-play-keyboards.py", ""),
+             13: ("./gui-play-waterfall.py", ""),
+             19: ("./autoplay.py", ""),								# auto-play
              26: ("xterm", "-fullscreen -e ./organelle.py t"),		# theremin
              23: ("xterm", "-fullscreen -e ./organelle.py g")		# pitch game
               }
