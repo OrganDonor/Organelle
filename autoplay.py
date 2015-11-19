@@ -245,6 +245,7 @@ def init_playing_file(index):
 	midifile_iter = iter(midifile)
 	time_passed = 0
 	progressIndicator.reset(midifile.length)
+	playButton.config(state=NORMAL)
 	
 
 def start_playback():
