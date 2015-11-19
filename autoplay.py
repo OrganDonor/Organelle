@@ -38,6 +38,7 @@ import rtmidi
 
 SONGS_SUBDIRECTORY = "songs"
 
+deployed_mode = isfile("deployed.txt")		# Create this file to go full-screen, etc.
 
 def frac(x):
 	"""Return the fractional part of a positive number.
@@ -518,10 +519,11 @@ bottom.grid()
 
 songs = SongList()
 
+if deployed_mode:
+	root.attributes("-fullscreen", True)
+else:
 # for debug, use the same screen size as the real screen, in a handy screen position.
-#root.geometry("800x480+50+50")
-# for real hardware, go full screen
-root.attributes("-fullscreen", True)
+	root.geometry("800x480+50+50")
 
 # temp test code!!!
 #progressIndicator.reset(123)
