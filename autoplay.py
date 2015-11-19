@@ -42,8 +42,14 @@ deployed_mode = isfile("deployed.txt")		# Create this file to go full-screen, et
 
 # Colors for the progress indicator
 active_color = "#888"
-inactive_color = "#eee"
-paused_color = "#ccc"
+inactive_color = "#ccc"
+paused_color = "#aaa"
+
+# colors for the three main frames of the UI
+top_bg = "#eee"
+mid_bg = "#8888ff"
+bot_bg = "#b8b8b8"
+
 
 def frac(x):
 	"""Return the fractional part of a positive number.
@@ -483,11 +489,6 @@ pauseImage = PhotoImage(file="icons/pause.gif")
 stepLeftImage = PhotoImage(file="icons/stepleft.gif")
 stepRightImage = PhotoImage(file="icons/stepright.gif")
 
-# colors for the three main frames of the UI
-top_bg = "#eee"
-mid_bg = "#8888ff"
-bot_bg = "#b8b8b8"
-
 # Create all the on-screen widgets.
 # Everything relating to the current song is in the top frame, everything relating to
 # the candidate next song is in the middle frame, and the transport buttons are in the
@@ -550,6 +551,7 @@ else:
 	root.geometry("800x480+50+50")
 
 after_id = None
+playing = False
 
 # Start with the first two songs as the current and candidate songs
 set_current(1)
