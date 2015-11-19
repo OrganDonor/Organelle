@@ -40,11 +40,17 @@ SONGS_SUBDIRECTORY = "songs"
 
 deployed_mode = isfile("deployed.txt")		# Create this file to go full-screen, etc.
 
+# Colors for the progress indicator
+active_color = "#888"
+inactive_color = "#eee"
+paused_color = "#ccc"
+
 def frac(x):
 	"""Return the fractional part of a positive number.
 	"""
 	return x - int(x)
-	
+
+
 class TimeProgressLabel(Label):
 	"""Text Label-based widget to display progress in the form "m:ss of m:ss"
 	
@@ -60,81 +66,93 @@ class TimeProgressLabel(Label):
 		self.duration = 0
 		self.last_realignment = -1
 		self.seconds_updater = None
-		self.time_origin = 0.0
-		self._update_string()
+		self._update_string(0.0)
+		self.config(fg=inactive_color)
 		
-	def _update_string(self):
-		self.config(text = "%d:%02d of %d:%02d" % (int(self.displayed_seconds/60),int(self.displayed_seconds%60),int(self.duration/60),int(self.duration%60)))
-		print "displaying: %d:%02d of %d:%02d" % (int(self.displayed_seconds/60),int(self.displayed_seconds%60),int(self.duration/60),int(self.duration%60)), "at system: ", time.time() - self.time_origin
+	def _update_string(self, t):
+		self.config(text = "%d:%02d of %d:%02d" % (int(t/60),int(t%60),int(self.duration/60),int(self.duration%60)))
+		print "displaying: %d:%02d of %d:%02d" % (int(t/60),int(t%60),int(self.duration/60),int(self.duration%60)), 
 		
 	def reset(self, seconds):
 		"""Initialize the total duration and reset the elapsed time to zero.
 		"""
 		self.elapsed = 0
-		self.displayed_seconds = 0
 		self.duration = seconds
-		self.freewheeling = True
 		if self.seconds_updater != None:
 			self.after_cancel(self.seconds_updater)
 			self.seconds_updater = None
-			print "canceled pending seconds updater"
-		self._update_string()
-		self.time_origin = None
-		#!!! reset normal attributes here
+		self._update_string(0.0)
+		self.systime_offset = None
+		self.config(fg=inactive_color)
 		print "reset progress"
 				
 	def advance(self, midi_incremental_time):
 		"""Advance the elapsed time by a specified amount.
+		
 		MIDI time is considered authoritative; we don't care about real time at all.
 		So the cumulative sum of these advances is the definitive elapsed time for the song.
 	
-		This routine is responsible for scheduling the display update on integral seconds,
-		but the _next_second routine also schedules that update so it can freewheel through
-		long periods without a MIDI event. If we find this has happened (by checking the
-		freewheeling flag) we cancel the less-precise update and substitute our own.
+		This routine is responsible for scheduling the display update on integral seconds.
+		We keep the timer updated with the latest idea of time from calls to advance().
+		We also keep track of the offset between system time and MIDI time, so that the
+		display updater can always compute the right time to display, even during long
+		notes or rests.
 		"""
-		if self.time_origin == None:
-			self.time_origin = time.time()
-
 		self.elapsed += midi_incremental_time
-		print "increment: ", midi_incremental_time, " elapsed: ", self.elapsed, "system: ", time.time()-self.time_origin
-		if self.freewheeling:
-			if self.seconds_updater != None:
-				self.after_cancel(self.seconds_updater)
-			self.displayed_seconds = int(self.elapsed)
-			self.seconds_updater = self.after(int(1000*(1.0-frac(self.elapsed))), self._next_second)
-			self.freewheeling = False
-			print "resynced, ds = ", self.displayed_seconds, "set updater for ", int(1000*(1.0-frac(self.elapsed)))
+		self.systime_offset = time.time() - self.elapsed
+		print "increment: ", midi_incremental_time, " elapsed: ", self.elapsed, "system offset: ", self.systime_offset
+		
+		# Update the timer to expire on the next second boundary.
+		# There's a race here; the timer might be expiring right now.
+		# That's OK because the timer handler is designed to display the right time
+		# even if is called multiple times.
+		# Is it possible for the handler to get called zero times? Maybe, depending on
+		# the (undocumented) behavior of self.cancel_after(). If that does happen, the
+		# handler would just update by 2 at the next second boundary, so at least the error
+		# would be transient.
+		if self.seconds_updater is not None:
+			self.after_cancel(self.seconds_updater)
+		self.seconds_updater = self.after(int(1000*(1.0-frac(self.elapsed))), self._next_second)
 	
+		self.config(fg=active_color)
+		
 	def	_next_second(self):
-		"""Take notice of the passage of a whole second of elapsed time.
-		This event is guaranteed to happen every second during playback, but it isn't
-		guaranteed to be completely locked onto MIDI time (mainly in the case where a long
-		time passes without any MIDI events). This event reschedules itself for 1.0 seconds
-		later, but most of the time we hope to cancel that schedule and substitute a new one
-		derived directly from MIDI time.
-		"""		
-		self.seconds_updater = self.after(1000, self._next_second)
-		self.freewheeling = True
-		self.displayed_seconds += 1
-		self._update_string()
-		print "freewheeling, ds = ", self.displayed_seconds, "system: ", time.time() - self.time_origin
+		"""Update the display once per second of elapsed (MIDI) time.
+		
+		We've tried to arrange for this event to fire very near the second boundary
+		(in MIDI time) for every second boundary. Due to an unavoidable race condition,
+		it might fire more than once for the same second boundary. Thus it is crucial
+		that this function display the correct time without trying to count invocations.
+		We do this by keeping track of the offset between system time and elapsed (MIDI)
+		time. This function subtracts that offset from system time to get the time
+		to display.
+		
+		This event reschedules itself for 1.0 seconds later, just in case there are
+		no advance() events during the coming second. More often, there will be.
+		"""	
+		self.seconds_updater = self.after(1000, self._next_second)	# just in case
+		if self.systime_offset is not None:
+			self._update_string(round(time.time() - self.systime_offset))
 		
 	def pause(self):
 		"""Pause timekeeping without disrupting elapsed time.
 		After calling pause(), you may just start calling advance() again to resume.
 		"""
-		self.after_cancel(self.seconds_updater)
-		self.seconds_updater = None
-		
+		if self.seconds_updater is not None:
+			self.after_cancel(self.seconds_updater)
+			self.seconds_updater = None
+		self.systime_offset = None
+		self.config(fg=paused_color)
+				
 	def done(self):
 		"""Stop timekeeping at the end of a song.
 		"""
-		self.elapsed = self.duration		# just to be sure it looks right!
-		self._update_string()
-		#!!! change attributes to show that it isn't running now
-		self.after_cancel(self.seconds_updater)
-		self.seconds_updater = None
+		self._update_string(duration)		# just to be sure it looks right!
+		self.config(fg=inactive_color)
+		if self.seconds_updater is not None:
+			self.after_cancel(self.seconds_updater)
+			self.seconds_updater = None
+		self.systime_offset = None
 
 	
 def everything_off():
@@ -191,9 +209,11 @@ def play_next_message():
 		
 	except StopIteration:
 		playing = False
-		after_id = None
+		if after_id is not None:
+			root.after_cancel(after_id)
+			after_id = None
 		progressIndicator.done()
-		donePlayingAction()
+		#!!! donePlayingAction()
 
 
 def init_playing_file(index):
@@ -225,14 +245,15 @@ def start_playback():
 	"""Begin playback of whatever MidiFile oject is currently open.
 	
 	This might be starting from the beginning, or resuming in the middle.
-	Doesn't matter. All we do is kick off play_next_message(), which returns
+	Doesn't matter (much). All we do is kick off play_next_message(), which returns
 	quickly but schedules itself to run again and again until the whole file
 	has been played (or playback is paused or interrupted).
 	"""
 	global playing
 	
-	playing = True
-	play_next_message()			# kick things off
+	if not playing:
+		playing = True
+		play_next_message()			# kick things off
 
 
 def stop_playback():
@@ -389,12 +410,13 @@ def play_action():
 	at the current time index, which is the beginning of the song unless it
 	has previously been paused in the middle of playback.
 	"""
-	#!!! implement this
-	pass	
+	start_playback()
 
 def pause_action():
-	#!!! implement this
-	pass
+	"""Button handler for the "pause" button.
+	"""
+	stop_playback()
+	progressIndicator.pause()
 
 
 def initialize_MIDI_out():
@@ -526,10 +548,6 @@ if deployed_mode:
 else:
 # for debug, use the same screen size as the real screen, in a handy screen position.
 	root.geometry("800x480+50+50")
-
-# temp test code!!!
-#progressIndicator.reset(123)
-#progressIndicator.advance(0.01)		# just to start it; let it freewheel
 
 after_id = None
 
