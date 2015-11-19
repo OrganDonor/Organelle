@@ -133,6 +133,8 @@ class TimeProgressLabel(Label):
 		self.elapsed = self.duration		# just to be sure it looks right!
 		self._update_string()
 		#!!! change attributes to show that it isn't running now
+		self.after_cancel(self.seconds_updater)
+		self.seconds_updater = None
 
 	
 def everything_off():
