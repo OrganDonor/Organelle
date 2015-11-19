@@ -259,7 +259,7 @@ class KeyboardDisplay(Canvas):
 
 
 lt = "#f00"
-dk = "#d00"
+dk = "#c00"
 waterfall_offsets = (1, 13, 24, 36, 47, 59, 71, 82, 94, 105, 117, 128) # + 140*octaves
 waterfall_widths = (11, 10, 11, 10, 11, 11, 10, 11, 10,  11,  10,  11)
 waterfall_colors = (lt, dk, lt, dk, lt, lt, dk, lt, dk,  lt,  dk,  lt)
@@ -285,7 +285,7 @@ class WaterfallDisplay(Canvas):
 	"""
 	def __init__(self, *args, **kwargs):
 		Canvas.__init__(self, *args, **kwargs)
-		self.config(width=721, bg='#ddd', bd=0, highlightthickness=0)
+		self.config(width=721, bg=root_bg, bd=0, highlightthickness=0)
 		self.height=self.winfo_reqheight()
 		self.key_spacing = 20
 		self.note_items = [None] * 62
@@ -327,11 +327,13 @@ class WaterfallDisplay(Canvas):
 		self.after(self.tstep, self._animate)		# reschedule the animation
 		
 
+spacer = Canvas(root, height=10, bd=0, bg=root_bg, highlightthickness=0)
 kb4 = KeyboardDisplay(root, width=750, height=80, bd=0)
 wf4 = WaterfallDisplay(root, width=720, height=160, bd=0)
 kb8 = KeyboardDisplay(root, width=750, height=80, bd=0)
 wf8 = WaterfallDisplay(root, width=720, height=160, bd=0)
 
+spacer.pack()
 kb4.pack(expand=1)
 wf4.pack(expand=1)
 kb8.pack(expand=1)
