@@ -153,12 +153,13 @@ class TimeProgressLabel(Label):
 	def done(self):
 		"""Stop timekeeping at the end of a song.
 		"""
-		self._update_string(duration)		# just to be sure it looks right!
+		self._update_string(self.duration)		# just to be sure it looks right!
 		self.config(fg=inactive_color)
 		if self.seconds_updater is not None:
 			self.after_cancel(self.seconds_updater)
 			self.seconds_updater = None
 		self.systime_offset = None
+		self.config(fg=inactive_color)
 
 	
 def everything_off():
@@ -219,7 +220,7 @@ def play_next_message():
 			root.after_cancel(after_id)
 			after_id = None
 		progressIndicator.done()
-		#!!! donePlayingAction()
+		done_action()
 
 
 def init_playing_file(index):
@@ -417,13 +418,22 @@ def play_action():
 	has previously been paused in the middle of playback.
 	"""
 	start_playback()
+	playButton.config(state=DISABLED)
+	pauseButton.config(state=NORMAL)
 
 def pause_action():
 	"""Button handler for the "pause" button.
 	"""
 	stop_playback()
 	progressIndicator.pause()
+	playButton.config(state=NORMAL)
+	pauseButton.config(state=DISABLED)
 
+def done_action():
+	"""pseudo-button handler for the end of a song playback
+	"""
+	playButton.config(state=DISABLED)
+	pauseButton.config(state=DISABLED)
 
 def initialize_MIDI_out():
 	"""Initialize a MIDI output port using RTMIDI through mido
@@ -553,10 +563,10 @@ else:
 after_id = None
 playing = False
 
-# Start with the first two songs as the current and candidate songs
-set_current(1)
-set_candidate(2)
-start_playback()
+# Start with random songs as the current and next songs
+set_current(random.randint(0, len(songs)-1))
+set_candidate(random.randint(0, len(songs)-1))
+play_action()
 
 root.mainloop()
 print("Here we are cleaning up.")
