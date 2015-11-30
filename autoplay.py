@@ -77,7 +77,6 @@ class TimeProgressLabel(Label):
 		
 	def _update_string(self, t):
 		self.config(text = "%d:%02d of %d:%02d" % (int(t/60),int(t%60),int(self.duration/60),int(self.duration%60)))
-		print "displaying: %d:%02d of %d:%02d" % (int(t/60),int(t%60),int(self.duration/60),int(self.duration%60)), 
 		
 	def reset(self, seconds):
 		"""Initialize the total duration and reset the elapsed time to zero.
@@ -90,7 +89,6 @@ class TimeProgressLabel(Label):
 		self._update_string(0.0)
 		self.systime_offset = None
 		self.config(fg=inactive_color)
-		print "reset progress"
 				
 	def advance(self, midi_incremental_time):
 		"""Advance the elapsed time by a specified amount.
@@ -106,7 +104,6 @@ class TimeProgressLabel(Label):
 		"""
 		self.elapsed += midi_incremental_time
 		self.systime_offset = time.time() - self.elapsed
-		print "increment: ", midi_incremental_time, " elapsed: ", self.elapsed, "system offset: ", self.systime_offset
 		
 		# Update the timer to expire on the next second boundary.
 		# There's a race here; the timer might be expiring right now.
