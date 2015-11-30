@@ -128,20 +128,20 @@ class MidiPortPassthru():
 	are to be passed through to the console. It then handles messages according to
 	the user settings.
 	"""
-	def __init__(port):
+	def __init__(self, port):
 		self.port = port
 		self.enabled = True
 		self.gui = None			#!!! construct GUI here
 	
-	def handle_message(msg):
+	def handle_message(self, msg):
 		if self.enabled:
 			#!!! lots more logic here
-			out.send(msg)
+			outport.send(msg)
 	
 
 configure_console(flagMidi=2)			# Make sure console allows access to both ranks
 
-Label(root, text="Play From MIDI Devices", font=("Helvetica", 24), fg='red', bg=root_bg, padx=4, pady=2).pack()
+Label(root, text="Play From MIDI Devices", font=("Helvetica", 36), fg='red', bg=root_bg, padx=4, pady=2).pack()
 
 
 # Associate each input port with a MidiPortPassthru and put their GUIs on the screen.
