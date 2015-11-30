@@ -104,6 +104,11 @@ def poll_midi():
 
 	root.after(50, poll_midi)
 
+def everything_off():
+	"""Turn off every note, in case it's stuck playing.
+	"""
+	for mynote in range(1,128):
+		outport.send(mido.Message('note_off', note=mynote, velocity=100))
 	
 def configure_console(flagMidi=1, flagKBecho=1, flagGhostBuster=1):
 	"""Send a SysEx to the console to set the configuration flags.
@@ -121,6 +126,7 @@ def configure_console(flagMidi=1, flagKBecho=1, flagGhostBuster=1):
 	"""
 	outport.send(mido.Message('sysex', data=[0x7d, 0x55, flagMidi, flagKBecho, flagGhostBuster]))
 
+enabledColor = 'green'
 class MidiPortPassthru():
 	"""Object to handle configuration and passthrough of MIDI notes from an input port.
 	
@@ -130,11 +136,32 @@ class MidiPortPassthru():
 	"""
 	def __init__(self, port):
 		self.port = port
-		self.enabled = True
-		self.gui = None			#!!! construct GUI here
+		self.enabled = IntVar()
+		self.enabled.set(1)				# defaults to enabled
+		self.gui = Frame(root, height=110, width=800, bg=root_bg, bd=2, relief=SUNKEN)
+		port_name = "MIDI In " + chr(ord(port.name[-1])+1)
+		self.portlabel = Label(self.gui, text=port_name+':', font=("Helvetica", 24), fg='black', bg=root_bg)
+		self.portlabel.pack(side=LEFT)
+		self.enabledButton = Checkbutton(self.gui, text="Enabled ", font=("Helvetica", 18), padx=0, pady=0, bg=enabledColor, activebackground=enabledColor, highlightbackground=enabledColor, variable=self.enabled, command=self._enabledCallback)
+		self.enabledButton.pack(side=LEFT)
+		#!!! construct rest of GUI here
 	
+	def _enabledCallback(self):
+		if self.enabled.get() == 1:
+			self.portlabel.config(fg='black')
+			self.enabledButton.config(bg=enabledColor, activebackground=enabledColor, highlightbackground=enabledColor)
+			#!!! enable secondary controls here
+		else:
+			self.portlabel.config(fg='gray')
+			self.enabledButton.config(bg=root_bg, activebackground=root_bg, highlightbackground=root_bg)
+			#!!! disable secondary controls here
+			everything_off()		# just in case there are notes left playing
+									# This disrupts the other channels, but to avoid that
+									# we'd need to keep track of all the notes played. Ugh.
+		pass
+		
 	def handle_message(self, msg):
-		if self.enabled:
+		if self.enabled.get() == 1:
 			#!!! lots more logic here
 			outport.send(msg)
 	
@@ -149,7 +176,7 @@ passthrus = []
 for port in inports:
 	passthru = MidiPortPassthru(port)
 	passthrus.append(passthru)
-#	passthru.gui.pack(expand=1)
+	passthru.gui.pack(fill=BOTH, expand=1)
 
 poll_midi()					# kick off a frequent poll of the MIDI input port
 
