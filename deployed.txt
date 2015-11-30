@@ -1,1 +1,3 @@
-If this file exists, GUI Organelle programs will run in the standard full-screen mode.
+If this file exists and is named "deployed.txt", GUI Organelle programs
+will run in the standard full-screen mode. Otherwise, they run in a window
+for ease of debugging.
