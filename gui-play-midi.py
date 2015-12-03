@@ -18,6 +18,10 @@ from os.path import isfile
 import mido
 import rtmidi
 
+# MIDI Channel numbers according to the console for each rank of pipes
+RANK_4FT = 0
+RANK_8FT = 1
+
 root_bg = "#bbb"
 
 deployed_mode = isfile("deployed.txt")		# Create this file to go full-screen, etc.
@@ -108,7 +112,8 @@ def everything_off():
 	"""Turn off every note, in case it's stuck playing.
 	"""
 	for mynote in range(1,128):
-		outport.send(mido.Message('note_off', note=mynote, velocity=100))
+		outport.send(mido.Message('note_off', note=mynote, velocity=100, channel=RANK_4FT))
+		outport.send(mido.Message('note_off', note=mynote, velocity=100, channel=RANK_8FT))
 	
 def configure_console(flagMidi=1, flagKBecho=1, flagGhostBuster=1):
 	"""Send a SysEx to the console to set the configuration flags.
@@ -126,7 +131,23 @@ def configure_console(flagMidi=1, flagKBecho=1, flagGhostBuster=1):
 	"""
 	outport.send(mido.Message('sysex', data=[0x7d, 0x55, flagMidi, flagKBecho, flagGhostBuster]))
 
+
+
+MODE_PASSTHRU, MODE_4FT, MODE_8FT, MODE_BOTH, MODE_MAX = range(5)
+ModeButtons = [
+	("Thru", MODE_PASSTHRU),
+	("4' Rank", MODE_4FT),
+	("8' Rank", MODE_8FT),
+	("Both Ranks", MODE_BOTH),
+	("Max", MODE_MAX)
+]
+ModeButtonColor = '#ccc'
 enabledColor = 'green'
+
+MIN_SUBOCTAVE_NOTE = 13
+MAX_OCTAVE_NOTE = 115
+OCTAVE = 12
+
 class MidiPortPassthru():
 	"""Object to handle configuration and passthrough of MIDI notes from an input port.
 	
@@ -144,15 +165,6 @@ class MidiPortPassthru():
 
 	The controls could be more general, but it would be too complex on screen.
 	"""
-	MODE_PASSTHRU, MODE_4FT, MODE_8FT, MODE_BOTH, MODE_MAX = range(5)
-	ModeButtons = [
-		("Thru", MODE_PASSTHRU),
-		("4' Rank", MODE_4FT),
-		("8' Rank", MODE_8FT),
-		("Both Ranks", MODE_BOTH),
-		("Max", MODE_MAX)
-	]
-	
 	def __init__(self, port):
 		self.port = port
 		self.enabled = IntVar()
@@ -160,37 +172,86 @@ class MidiPortPassthru():
 		self.gui = Frame(root, height=110, width=800, bg=root_bg, bd=2, relief=SUNKEN)
 		port_name = "MIDI In " + chr(ord(port.name[-1])+1)
 		self.portlabel = Label(self.gui, text=port_name+':', font=("Helvetica", 24), fg='black', bg=root_bg)
-		self.portlabel.pack(side=LEFT)
+		self.portlabel.pack(side=LEFT, padx=10)
 		self.enabledButton = Checkbutton(self.gui, text="Enabled ", font=("Helvetica", 18), padx=0, pady=0, bg=enabledColor, activebackground=enabledColor, highlightbackground=enabledColor, variable=self.enabled, command=self._enabledCallback)
-		self.enabledButton.pack(side=LEFT)
+		self.enabledButton.pack(side=LEFT, padx=10)
 		self.mode = IntVar()
 		self.mode.set(MODE_PASSTHRU)
 		self.modeButtons = []
 		for text,value in ModeButtons:
-			self.modeButtons.append(Radiobutton(self.gui, text=text, value=value, variable=self.mode, bg=ModeButtonColor, highlightcolor=ModeButtonColor, indicatoron=0))
-		for button in self.modeButtons:
-			button.pack(side=LEFT)
+			self.modeButtons.append(Radiobutton(self.gui, text=text, value=value, variable=self.mode, command=self._modeCallback, bg=ModeButtonColor, highlightcolor=ModeButtonColor, indicatoron=0, font=("Helvetica", 14), padx=5, pady=5))
+		self.showing_buttons = False
+		self._showButtons(True)
+	
+	def _showButtons(self, show):
+		"""Show or hide the secondary buttons on this widget.
+		"""
+		if show and not self.showing_buttons:
+			for button in self.modeButtons:
+				button.pack(side=LEFT, padx=10)
+			self.showing_buttons = True
+		elif self.showing_buttons and not show:
+			for button in self.modeButtons:
+				button.pack_forget()
+			self.showing_buttons = False
 			
 	def _enabledCallback(self):
+		"""Called when the enabled status of this MIDI port is changed.
+		"""
 		if self.enabled.get() == 1:
 			self.portlabel.config(fg='black')
-			self.enabledButton.config(bg=enabledColor, activebackground=enabledColor, highlightbackground=enabledColor)
-			for button in self.modeButtons:
-				button.config(state=NORMAL)
+			self.enabledButton.config(text="Enabled ", bg=enabledColor, activebackground=enabledColor, highlightbackground=enabledColor)
+			self._showButtons(True)
 		else:
 			self.portlabel.config(fg='gray')
-			self.enabledButton.config(bg=root_bg, activebackground=root_bg, highlightbackground=root_bg)
-			for button in self.modeButtons:
-				button.config(state=DISABLED)
+			self.enabledButton.config(text="Enable   ", bg=root_bg, activebackground=root_bg, highlightbackground=root_bg)
+			self._showButtons(False)
 			everything_off()		# just in case there are notes left playing
 									# This disrupts the other channels, but to avoid that
 									# we'd need to keep track of all the notes played. Ugh.
-		pass
+	
+	def _modeCallback(self):
+		"""Called when the message handling mode of this MIDI port is changed.
+		"""
+		everything_off()		# Just to make sure there are no orphaned notes being played
 		
 	def handle_message(self, msg):
 		if self.enabled.get() == 1:
-			#!!! lots more logic here
-			outport.send(msg)
+			mode = self.mode.get()
+			if mode == MODE_PASSTHRU:
+				outport.send(msg)		# Send the message on without thinking about it
+			else:
+				if 'note_on' in msg.type or 'note_off' in msg.type:	# discard other message types
+					if mode == MODE_4FT:
+						msg.channel = RANK_4FT
+						outport.send(msg)
+					elif mode == MODE_8FT:
+						msg.channel = RANK_8FT
+						outport.send(msg)
+					elif mode == MODE_BOTH:
+						msg.channel = RANK_4FT
+						outport.send(msg)
+						msg.channel = RANK_8FT
+						outport.send(msg)
+					elif mode == MODE_MAX:	# Send to both ranks with octave couplers
+						msg.channel = RANK_4FT
+						note = msg.note
+						outport.send(msg)
+						if note >= MIN_SUBOCTAVE_NOTE:
+							msg.note = note - OCTAVE
+							outport.send(msg)
+						if note <= MAX_OCTAVE_NOTE:
+							msg.note = note + OCTAVE
+							outport.send(msg)
+						msg.channel = RANK_8FT
+						if note >= MIN_SUBOCTAVE_NOTE:
+							msg.note = note - OCTAVE
+							outport.send(msg)
+						if note <= MAX_OCTAVE_NOTE:
+							msg.note = note + OCTAVE
+							outport.send(msg)
+					else:
+						print "Impossible mode."
 	
 
 configure_console(flagMidi=2)			# Make sure console allows access to both ranks
@@ -215,3 +276,4 @@ else:
 
 root.mainloop()
 print("Here we are cleaning up.")
+everything_off()
