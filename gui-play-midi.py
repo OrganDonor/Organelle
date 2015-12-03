@@ -133,7 +133,26 @@ class MidiPortPassthru():
 	The object knows its port, and creates a GUI to set how messages from that port
 	are to be passed through to the console. It then handles messages according to
 	the user settings.
+	
+	A MIDI port can be translated to console notes in a few different ways:
+	* Thru mode -- all messages are passed thru on the channel they're received on
+	* 4' Rank mode -- Note On and Note Off messages on any channel go to the 4' rank
+	* 8' Rank mode -- Note On and Note Off messages on any channel go to the 8' rank
+	* Both Ranks mode -- Note On and Note Off messages on any channel go to both ranks
+	* Max mode -- Note On and Note Off messages on any channel go to both ranks, AND
+		are tripled with octave and suboctave couplers.
+
+	The controls could be more general, but it would be too complex on screen.
 	"""
+	MODE_PASSTHRU, MODE_4FT, MODE_8FT, MODE_BOTH, MODE_MAX = range(5)
+	ModeButtons = [
+		("Thru", MODE_PASSTHRU),
+		("4' Rank", MODE_4FT),
+		("8' Rank", MODE_8FT),
+		("Both Ranks", MODE_BOTH),
+		("Max", MODE_MAX)
+	]
+	
 	def __init__(self, port):
 		self.port = port
 		self.enabled = IntVar()
@@ -144,17 +163,25 @@ class MidiPortPassthru():
 		self.portlabel.pack(side=LEFT)
 		self.enabledButton = Checkbutton(self.gui, text="Enabled ", font=("Helvetica", 18), padx=0, pady=0, bg=enabledColor, activebackground=enabledColor, highlightbackground=enabledColor, variable=self.enabled, command=self._enabledCallback)
 		self.enabledButton.pack(side=LEFT)
-		#!!! construct rest of GUI here
-	
+		self.mode = IntVar()
+		self.mode.set(MODE_PASSTHRU)
+		self.modeButtons = []
+		for text,value in ModeButtons:
+			self.modeButtons.append(Radiobutton(self.gui, text=text, value=value, variable=self.mode, bg=ModeButtonColor, highlightcolor=ModeButtonColor, indicatoron=0))
+		for button in self.modeButtons:
+			button.pack(side=LEFT)
+			
 	def _enabledCallback(self):
 		if self.enabled.get() == 1:
 			self.portlabel.config(fg='black')
 			self.enabledButton.config(bg=enabledColor, activebackground=enabledColor, highlightbackground=enabledColor)
-			#!!! enable secondary controls here
+			for button in self.modeButtons:
+				button.config(state=NORMAL)
 		else:
 			self.portlabel.config(fg='gray')
 			self.enabledButton.config(bg=root_bg, activebackground=root_bg, highlightbackground=root_bg)
-			#!!! disable secondary controls here
+			for button in self.modeButtons:
+				button.config(state=DISABLED)
 			everything_off()		# just in case there are notes left playing
 									# This disrupts the other channels, but to avoid that
 									# we'd need to keep track of all the notes played. Ugh.
