@@ -41,16 +41,16 @@ proc_exit_delay = 1.0		# seconds to allow the process to exit
 GPIO.setmode(GPIO.BCM)
 
 # Mapping of pins onto programs and their command-line arguments
-programs = {  4: ("xterm", "-fullscreen -e ./organelle.py p MIDI4x4_20:0 MIDIPLUS_1"),
-             17: ("xterm", "-fullscreen -e ./organelle.py p MIDI4x4_20:1 MIDIPLUS_2"),
-             27: ("xterm", "-fullscreen -e ./organelle.py p MIDI4x4_20:2 MIDIPLUS_3"),
-             22: ("xterm", "-fullscreen -e ./organelle.py p MIDI4x4_20:3 MIDIPLUS_4"),
-              5: ("xterm", "-fullscreen -e ./organelle.py 4"),		# keyboards only
-              6: ("./gui-play-keyboards.py", ""),
+programs = {  4: ("./gui-play-midi.py", ""),
+             17: ("xterm", "-fullscreen -e ./organelle.py t"),
+             27: ("./gui-play-dark.py", ""),
+             22: ("./autoplay.py", ""),
+              5: ("./autoplay.py", ""),
+              6: ("xterm", "-fullscreen -e ./organelle.py g"),
              13: ("./gui-play-waterfall.py", ""),
-             19: ("./autoplay.py", ""),								# auto-play
-             26: ("xterm", "-fullscreen -e ./organelle.py t"),		# theremin
-             23: ("xterm", "-fullscreen -e ./organelle.py g")		# pitch game
+             19: ("./gui-play-keyboards.py", ""),								# auto-play
+             26: ("./gui-play-waterfall.py", ""),
+             23: ("./gui-play-dark.py", "")
               }
 
 # Extract the list of GPIO pins from the program mapping.
