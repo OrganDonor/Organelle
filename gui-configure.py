@@ -23,6 +23,8 @@ import mido
 from mido import MidiFile, MetaMessage
 import rtmidi
 
+deployed_mode = isfile("deployed.txt")      # Create this file to go full-screen, etc.
+
 save_path = "saved_configs/"
 icon_path = "icons/"
 bg_happy = "#ddd"
@@ -544,10 +546,11 @@ active_entry = 1
 set_active_entry(1)
 poll_midi()                 # kick off a frequent poll of the MIDI input port
 
-# for debug, use the same screen size as the real screen, in a handy screen position.
-# root.geometry("800x480+50+50")
-# for real hardware, go full screen
-root.attributes("-fullscreen", True)
+if deployed_mode:
+    root.attributes("-fullscreen", True)
+else:
+    # for debug, use the same screen size as the real screen, in a handy screen position.
+    root.geometry("800x480+50+50")
 
 root.mainloop()
 print("Here we are cleaning up.")
