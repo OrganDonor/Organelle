@@ -22,6 +22,9 @@ import rtmidi
 
 deployed_mode = isfile("deployed.txt")      # Create this file to go full-screen, etc.
 
+midi_channel = 1
+notes = [ 72, 74, 76, 77, 79, 81, 83, 84, 86, 88, 89, 91, 93, 95, 96, 98 ]
+notes.reverse()
 
 def initialize_MIDI_output():
     """Initialize a MIDI output port using RTMIDI through mido
@@ -138,19 +141,19 @@ class ButtonArray:
         # make a copy to return, just in case it gets messed with
         return list(self.truth[col])
 
-    def compare_columns(self, first_column, on_action, off_action):
-        """ Compare a column to its successor (modulo) and act on it.
+    def compare_columns(self, this_column, on_action, off_action):
+        """ Compare a column to its predecessor (modulo) and act on it.
 
-        The on_action is called for each row where the first column contains 0 and the
-        successor column contains 1.
+        The on_action is called for each row where the predecessor column
+        contains 0 and this column contains 1.
 
-        The off_action is called for each row where the first column contains 1 and the
-        successor column contains 0.
+        The off_action is called for each row where the predecessor column
+        contains 1 and this column contains 0.
 
         No action is taken if both columns contain the same value.
         """
-        next_column = (first_column + 1) % self.columns
-        for row, (before, after) in enumerate(zip(self.truth[first_column], self.truth[next_column])):
+        prev_column = (this_column - 1 + self.columns) % self.columns
+        for row, (before, after) in enumerate(zip(self.truth[prev_column], self.truth[this_column])):
             if before and not after:
                 off_action(row)
             elif after and not before:
@@ -158,14 +161,19 @@ class ButtonArray:
 
 
 def note_on(row):
-    print "note on in row", row
+    """Send a note_on message for the note corresponding to a given row."""
+    outport.send(mido.Message('note_on', note=notes[row], channel=midi_channel, velocity=100))
 
 
 def note_off(row):
-    print "note off in row", row
+    """Send a note_off message for the note corresponding to a given row."""
+    outport.send(mido.Message('note_off', note=notes[row], channel=midi_channel, velocity=100))
 
 
-def test_column_action(col):
+def play_column_differences(col):
+    """Column action: send MIDI commands to start notes that just came on
+    in this column and stop notes that were on before and aren't anymore.
+    """
     oontz.compare_columns(col, on_action=note_on, off_action=note_off)
 
 
@@ -199,7 +207,7 @@ else:
     # for debug, use the same screen size as the real screen, in a handy screen position.
     root.geometry("800x480+50+50")
 
-oontz = ButtonArray(root, rows=16, columns=24, height=28, width=28, column_action=test_column_action)
+oontz = ButtonArray(root, rows=16, columns=24, height=28, width=28, column_action=play_column_differences)
 
 root.mainloop()
 print("Here we are cleaning up.")
