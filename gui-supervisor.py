@@ -38,16 +38,16 @@ GPIO.setmode(GPIO.BCM)
 
 # Mapping of pins onto programs and their command-line arguments
 programs = {
-         4: ("./gui-play-midi.py", ""),
-        17: ("xterm", "-fullscreen -e ./organelle.py t"),
-        27: ("./gui-play-dark.py", ""),
-        22: ("./autoplay.py", ""),
-         5: ("./autoplay.py", ""),
-         6: ("xterm", "-fullscreen -e ./organelle.py g"),
-        13: ("./gui-play-waterfall.py", ""),
-        19: ("./gui-play-keyboards.py", ""),
-        26: ("./gui-play-waterfall.py", ""),
-        23: ("./gui-play-dark.py", "")
+         4: ("./gui-play-dark.py", ""),
+        17: ("./gui-play-midi.py", ""),
+        27: ("xterm", "-fullscreen -e ./organelle.py t"),
+        22: ("./gui-play-dark.py", ""),
+         5: ("./gui-play-dark.py", ""),
+         6: ("./autoplay.py", ""),
+        13: ("xterm", "-fullscreen -e ./organelle.py g"),
+        19: ("./gui-play-waterfall.py", ""),
+        26: ("./gui-play-keyboards.py", ""),
+        23: ("./gui-play-waterfall.py", "")
         }
 
 # Extract the list of GPIO pins from the program mapping.
