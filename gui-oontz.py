@@ -15,12 +15,14 @@ import sys
 import signal
 import time
 from os.path import isfile
+import pickle
 
 import mido
 from mido import MidiFile, MetaMessage
 import rtmidi
 
 deployed_mode = isfile("deployed.txt")      # Create this file to go full-screen, etc.
+save_filename = "oontz/saved_config.pickle"
 
 midi_channel = 1
 notes = [ 48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72, 74 ]
@@ -159,6 +161,22 @@ class ButtonArray:
             elif after and not before:
                 on_action(row)
 
+    def save(self):
+        """Save the current truth in a file for future re-use.
+        """
+        with open(save_filename, "wb") as f:
+            pickle.dump(self.truth, f)
+            
+    def restore(self):
+        """Restore the truth from a file.
+        """
+        if isfile(save_filename):
+            with open(save_filename, "rb") as f:
+                self.truth = pickle.load(f)
+            for col in range(0, self.columns):
+                for row in range(0, self.rows):
+                    self._redraw(row, col)
+
 
 def note_on(row):
     """Send a note_on message for the note corresponding to a given row."""
@@ -208,9 +226,11 @@ else:
     root.geometry("800x480+50+50")
 
 oontz = ButtonArray(root, rows=16, columns=24, height=28, width=28, column_action=play_column_differences)
+oontz.restore()
 
 root.mainloop()
 print("Here we are cleaning up.")
+oontz.save()
 
 #!!! maybe save the state here and restore it on restart? Because somebody else might
 # walk up and turn the rotary switch while we're working on a complex pattern!
