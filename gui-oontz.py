@@ -23,7 +23,7 @@ import rtmidi
 deployed_mode = isfile("deployed.txt")      # Create this file to go full-screen, etc.
 
 midi_channel = 1
-notes = [ 72, 74, 76, 77, 79, 81, 83, 84, 86, 88, 89, 91, 93, 95, 96, 98 ]
+notes = [ 48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72, 74 ]
 notes.reverse()
 
 def initialize_MIDI_output():
