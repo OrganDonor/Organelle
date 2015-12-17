@@ -24,6 +24,8 @@ import rtmidi
 deployed_mode = isfile("deployed.txt")      # Create this file to go full-screen, etc.
 save_filename = "oontz/saved_config.pickle"
 bg_color = 'green'
+speeds = [20, 14, 10, 7, 5]
+current_speed = 2       # index into speeds
 
 midi_channel = 1
 notes = [48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72, 74]
@@ -94,8 +96,8 @@ class ButtonArray:
         self.button_width = width
         self.button_height = height
         self.column_action = column_action
-        self.rects = [[self._rect(x, y) for y in range(0, self.height, self.button_height)] for x in range(0, self.width, self.button_width)]
-        self.truth = [[False            for y in range(0, self.height, self.button_height)] for x in range(0, self.width, self.button_width)]
+        self.rects = [[self._rect(x, y) for y in range(0, height * rows, self.button_height)] for x in range(0, width * columns, self.button_width)]
+        self.truth = [[False            for y in range(0, height * rows, self.button_height)] for x in range(0, width * columns, self.button_width)]
         self.cursor = self.canvas.create_line(0, 0, 0, self.height, fill='blue', width=3)
         self.cursor_position = -1
         self._scan_cursor()
@@ -143,7 +145,7 @@ class ButtonArray:
             self.canvas.coords(self.cursor, 0, 0, 0, self.height)
         if self.column_action is not None and (position % self.button_width) == 0:
             self.column_action(int(position) // self.button_width)
-        self.canvas.after(10, self._scan_cursor)
+        self.canvas.after(speeds[current_speed], self._scan_cursor)
 
     def get_column(self, col):
         """Return a list of booleans representing a column in the array."""
@@ -187,16 +189,38 @@ def play_column_differences(col):
 
     new_column = oontz.get_column(col)
     for row, (before, after) in enumerate(zip(current_column, new_column)):
-            if before and not after:
-                note_off(row)
-            elif after and not before:
-                note_on(row)
+        if before and not after:
+            note_off(row)
+        elif after and not before:
+            note_on(row)
     current_column = new_column
 
 
 def do_clear():
     """Button action: clear the array."""
     oontz.clear()
+
+
+def do_faster():
+    """Button action: increase scan speed."""
+    global current_speed
+
+    if current_speed + 1 < len(speeds):
+        current_speed += 1
+        slower_button.config(state=NORMAL)
+    if current_speed + 1 >= len(speeds):
+        faster_button.config(state=DISABLED)
+
+
+def do_slower():
+    """Button action: decrease scan speed."""
+    global current_speed
+
+    if current_speed > 0:
+        current_speed -= 1
+        faster_button.config(state=NORMAL)
+    if current_speed == 0:
+        slower_button.config(state=DISABLED)
 
 
 def configure_console(flagMidi=1, flagKBecho=1, flagGhostBuster=1):
@@ -227,8 +251,14 @@ else:
 controls = Frame(root, width=96, height=480, bg=bg_color, bd=0, highlightthickness=0)
 controls.pack(side=RIGHT, expand=1)
 
-clear_button = Button(controls, text='Clear', command=do_clear, bg=bg_color, highlightbackground=bg_color)
-clear_button.pack()
+clear_button = Button(controls, text='Clear', command=do_clear)
+clear_button.pack(pady=100)
+
+faster_button = Button(controls, text='Faster', command=do_faster)
+faster_button.pack(pady=20)
+
+slower_button = Button(controls, text='Slower', command=do_slower)
+slower_button.pack(pady=20)
 
 oontz = ButtonArray(root, rows=16, columns=24, height=28, width=28, column_action=play_column_differences)
 oontz.restore()
