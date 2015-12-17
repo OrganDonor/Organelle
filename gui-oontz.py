@@ -31,8 +31,7 @@ notes.reverse()
 
 
 def initialize_MIDI_output():
-    """Initialize a MIDI output port using RTMIDI through mido
-    """
+    """Initialize a MIDI output port using RTMIDI through mido"""
 
     # select rtmidi as our backend
     mido.set_backend('mido.backends.rtmidi')
@@ -82,8 +81,7 @@ signal.signal(signal.SIGUSR1, handle_sigusr1)
 
 
 class ButtonArray:
-    """Packed 2D array of button-like rectangular areas drawn on a Tk canvas.
-    """
+    """Packed 2D array of button-like rectangular areas drawn on a Tk canvas."""
     def __init__(self, parent, rows=10, columns=10, width=20, height=20, false_color='white', true_color='red', column_action=None):
         self.height = height * rows + 1
         self.width = width * columns + 1
@@ -157,14 +155,12 @@ class ButtonArray:
         return [False] * self.rows
 
     def save(self):
-        """Save the current truth in a file for future re-use.
-        """
+        """Save the current truth in a file for future re-use."""
         with open(save_filename, "wb") as f:
             pickle.dump(self.truth, f)
 
     def restore(self):
-        """Restore the truth from a file.
-        """
+        """Restore the truth from a file."""
         if isfile(save_filename):
             with open(save_filename, "rb") as f:
                 self.truth = pickle.load(f)
@@ -183,13 +179,6 @@ def note_off(row):
     outport.send(mido.Message('note_off', note=notes[row], channel=midi_channel, velocity=100))
 
 
-# def play_column_differences(col):
-#     """Column action: send MIDI commands to start notes that just came on
-#     in this column and stop notes that were on before and aren't anymore.
-#     """
-#     oontz.compare_columns(col, on_action=note_on, off_action=note_off)
-
-
 def play_column_differences(col):
     """Column action: send MIDI commands to start notes that just came on
     in this column and stop notes that were on before and aren't anymore.
@@ -206,6 +195,7 @@ def play_column_differences(col):
 
 
 def do_clear():
+    """Button action: clear the array."""
     oontz.clear()
 
 
@@ -226,12 +216,7 @@ def configure_console(flagMidi=1, flagKBecho=1, flagGhostBuster=1):
     outport.send(mido.Message('sysex', data=[0x7d, 0x55, flagMidi, flagKBecho, flagGhostBuster]))
 
 
-def flash_console():
-    """Send a SysEx to the console to make the buttons all flash once.
-    """
-    outport.send(mido.Message('sysex', data=[0x7d, 0x50]))
-    time.sleep(0.20)        # wait for the flash to be done; console is while flashing
-
+configure_console()
 
 if deployed_mode:
     root.attributes("-fullscreen", True)
