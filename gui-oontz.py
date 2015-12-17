@@ -23,6 +23,7 @@ import rtmidi
 
 deployed_mode = isfile("deployed.txt")      # Create this file to go full-screen, etc.
 save_filename = "oontz/saved_config.pickle"
+bg_color = 'green'
 
 midi_channel = 1
 notes = [48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72, 74]
@@ -71,7 +72,7 @@ def initialize_MIDI_output():
 outport = initialize_MIDI_output()
 
 root = Tk()
-root.config(bg='green')
+root.config(bg=bg_color)
 
 
 # This program ends normally when we receive a SIGUSR1 signal from the supervisor.
@@ -86,8 +87,8 @@ class ButtonArray:
     def __init__(self, parent, rows=10, columns=10, width=20, height=20, false_color='white', true_color='red', column_action=None):
         self.height = height * rows + 1
         self.width = width * columns + 1
-        self.canvas = Canvas(parent, width=self.width, height=self.height, bd=0, highlightthickness=0, bg='green')
-        self.canvas.pack(anchor=CENTER, expand=1)
+        self.canvas = Canvas(parent, width=self.width, height=self.height, bd=0, highlightthickness=0, bg=bg_color)
+        self.canvas.pack(anchor=CENTER, side=RIGHT, expand=1)
         self.rows = rows
         self.columns = columns
         self.false_color = false_color
@@ -128,6 +129,13 @@ class ButtonArray:
         else:
             self.canvas.itemconfig(self.rects[col][row], fill=self.false_color)
 
+    def clear(self):
+        """Clear all the buttons"""
+        for col in range(0, self.columns):
+            for row in range(0, self.rows):
+                if self.truth[col][row]:
+                    self._toggle(row, col)
+
     def _scan_cursor(self):
         """Move the cursor line horizontally across the array."""
         self.canvas.move(self.cursor, 1, 0)
@@ -143,24 +151,6 @@ class ButtonArray:
         """Return a list of booleans representing a column in the array."""
         # make a copy to return, just in case it gets messed with
         return list(self.truth[col])
-
-#     def compare_columns(self, this_column, on_action, off_action):
-#         """ Compare a column to its predecessor (modulo) and act on it.
-#
-#         The on_action is called for each row where the predecessor column
-#         contains 0 and this column contains 1.
-#
-#         The off_action is called for each row where the predecessor column
-#         contains 1 and this column contains 0.
-#
-#         No action is taken if both columns contain the same value.
-#         """
-#         prev_column = (this_column - 1 + self.columns) % self.columns
-#         for row, (before, after) in enumerate(zip(self.truth[prev_column], self.truth[this_column])):
-#             if before and not after:
-#                 off_action(row)
-#             elif after and not before:
-#                 on_action(row)
 
     def empty_column(self):
         """Return a list of False representing a silent column."""
@@ -215,6 +205,10 @@ def play_column_differences(col):
     current_column = new_column
 
 
+def do_clear():
+    oontz.clear()
+
+
 def configure_console(flagMidi=1, flagKBecho=1, flagGhostBuster=1):
     """Send a SysEx to the console to set the configuration flags.
     Definitions copied from the Arduino code:
@@ -244,6 +238,12 @@ if deployed_mode:
 else:
     # for debug, use the same screen size as the real screen, in a handy screen position.
     root.geometry("800x480+50+50")
+
+controls = Frame(root, width=96, height=480, bg=bg_color, bd=0, highlightthickness=0)
+controls.pack(side=RIGHT, expand=1)
+
+clear_button = Button(controls, text='Clear', command=do_clear, bg=bg_color, highlightbackground=bg_color)
+clear_button.pack()
 
 oontz = ButtonArray(root, rows=16, columns=24, height=28, width=28, column_action=play_column_differences)
 oontz.restore()
