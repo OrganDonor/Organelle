@@ -25,8 +25,9 @@ deployed_mode = isfile("deployed.txt")      # Create this file to go full-screen
 save_filename = "oontz/saved_config.pickle"
 
 midi_channel = 1
-notes = [ 48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72, 74 ]
+notes = [48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72, 74]
 notes.reverse()
+
 
 def initialize_MIDI_output():
     """Initialize a MIDI output port using RTMIDI through mido
@@ -143,30 +144,34 @@ class ButtonArray:
         # make a copy to return, just in case it gets messed with
         return list(self.truth[col])
 
-    def compare_columns(self, this_column, on_action, off_action):
-        """ Compare a column to its predecessor (modulo) and act on it.
+#     def compare_columns(self, this_column, on_action, off_action):
+#         """ Compare a column to its predecessor (modulo) and act on it.
+#
+#         The on_action is called for each row where the predecessor column
+#         contains 0 and this column contains 1.
+#
+#         The off_action is called for each row where the predecessor column
+#         contains 1 and this column contains 0.
+#
+#         No action is taken if both columns contain the same value.
+#         """
+#         prev_column = (this_column - 1 + self.columns) % self.columns
+#         for row, (before, after) in enumerate(zip(self.truth[prev_column], self.truth[this_column])):
+#             if before and not after:
+#                 off_action(row)
+#             elif after and not before:
+#                 on_action(row)
 
-        The on_action is called for each row where the predecessor column
-        contains 0 and this column contains 1.
-
-        The off_action is called for each row where the predecessor column
-        contains 1 and this column contains 0.
-
-        No action is taken if both columns contain the same value.
-        """
-        prev_column = (this_column - 1 + self.columns) % self.columns
-        for row, (before, after) in enumerate(zip(self.truth[prev_column], self.truth[this_column])):
-            if before and not after:
-                off_action(row)
-            elif after and not before:
-                on_action(row)
+    def empty_column(self):
+        """Return a list of False representing a silent column."""
+        return [False] * self.rows
 
     def save(self):
         """Save the current truth in a file for future re-use.
         """
         with open(save_filename, "wb") as f:
             pickle.dump(self.truth, f)
-            
+
     def restore(self):
         """Restore the truth from a file.
         """
@@ -188,11 +193,26 @@ def note_off(row):
     outport.send(mido.Message('note_off', note=notes[row], channel=midi_channel, velocity=100))
 
 
+# def play_column_differences(col):
+#     """Column action: send MIDI commands to start notes that just came on
+#     in this column and stop notes that were on before and aren't anymore.
+#     """
+#     oontz.compare_columns(col, on_action=note_on, off_action=note_off)
+
+
 def play_column_differences(col):
     """Column action: send MIDI commands to start notes that just came on
     in this column and stop notes that were on before and aren't anymore.
     """
-    oontz.compare_columns(col, on_action=note_on, off_action=note_off)
+    global current_column
+
+    new_column = oontz.get_column(col)
+    for row, (before, after) in enumerate(zip(current_column, new_column)):
+            if before and not after:
+                note_off(row)
+            elif after and not before:
+                note_on(row)
+    current_column = new_column
 
 
 def configure_console(flagMidi=1, flagKBecho=1, flagGhostBuster=1):
@@ -227,6 +247,7 @@ else:
 
 oontz = ButtonArray(root, rows=16, columns=24, height=28, width=28, column_action=play_column_differences)
 oontz.restore()
+current_column = oontz.empty_column()
 
 root.mainloop()
 print("Here we are cleaning up.")
