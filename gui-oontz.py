@@ -252,6 +252,5 @@ current_column = oontz.empty_column()
 root.mainloop()
 print("Here we are cleaning up.")
 oontz.save()
-
-#!!! maybe save the state here and restore it on restart? Because somebody else might
-# walk up and turn the rotary switch while we're working on a complex pattern!
+for row in range(0, oontz.rows):
+    note_off(row)
