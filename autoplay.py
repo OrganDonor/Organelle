@@ -439,6 +439,9 @@ def done_action():
     """
     playButton.config(state=DISABLED)
     pauseButton.config(state=DISABLED)
+    
+    # automatically advance to the next song and be ready to play
+    step_forward_action()
 
 
 def initialize_MIDI_out():
